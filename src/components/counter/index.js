@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 
 const Count = () => {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(() => {
+    console.log("useState...");
+    return 0;
+  });
   const handleIncrement = () => {
     setCount((e) => {
       // console.log("setCount...", e);

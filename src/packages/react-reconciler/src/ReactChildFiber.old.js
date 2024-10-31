@@ -7,24 +7,29 @@
  * @flow
  */
 
-import type { ReactElement } from 'shared/ReactElementType';
-import type { ReactPortal } from 'shared/ReactTypes';
-import type { Fiber } from './ReactInternalTypes';
-import type { Lanes } from './ReactFiberLane.old';
+import type { ReactElement } from "shared/ReactElementType";
+import type { ReactPortal } from "shared/ReactTypes";
+import type { Fiber } from "./ReactInternalTypes";
+import type { Lanes } from "./ReactFiberLane.old";
 
-import getComponentNameFromFiber from 'react-reconciler/src/getComponentNameFromFiber';
-import { Placement, ChildDeletion, Forked } from './ReactFiberFlags';
+import getComponentNameFromFiber from "react-reconciler/src/getComponentNameFromFiber";
+import { Placement, ChildDeletion, Forked } from "./ReactFiberFlags";
 import {
   getIteratorFn,
   REACT_ELEMENT_TYPE,
   REACT_FRAGMENT_TYPE,
   REACT_PORTAL_TYPE,
   REACT_LAZY_TYPE,
-} from 'shared/ReactSymbols';
-import { ClassComponent, HostText, HostPortal, Fragment } from './ReactWorkTags';
-import isArray from 'shared/isArray';
-import { warnAboutStringRefs } from 'shared/ReactFeatureFlags';
-import { checkPropStringCoercion } from 'shared/CheckStringCoercion';
+} from "shared/ReactSymbols";
+import {
+  ClassComponent,
+  HostText,
+  HostPortal,
+  Fragment,
+} from "./ReactWorkTags";
+import isArray from "shared/isArray";
+import { warnAboutStringRefs } from "shared/ReactFeatureFlags";
+import { checkPropStringCoercion } from "shared/CheckStringCoercion";
 
 import {
   createWorkInProgress,
@@ -33,19 +38,19 @@ import {
   createFiberFromFragment,
   createFiberFromText,
   createFiberFromPortal,
-} from './ReactFiber.old';
-import { emptyRefsObject } from './ReactFiberClassComponent.old';
-import { isCompatibleFamilyForHotReloading } from './ReactFiberHotReloading.old';
-import { StrictLegacyMode } from './ReactTypeOfMode';
-import { getIsHydrating } from './ReactFiberHydrationContext.old';
-import { pushTreeFork } from './ReactFiberTreeContext.old';
+} from "./ReactFiber.old";
+import { emptyRefsObject } from "./ReactFiberClassComponent.old";
+import { isCompatibleFamilyForHotReloading } from "./ReactFiberHotReloading.old";
+import { StrictLegacyMode } from "./ReactTypeOfMode";
+import { getIsHydrating } from "./ReactFiberHydrationContext.old";
+import { pushTreeFork } from "./ReactFiberTreeContext.old";
 
 let didWarnAboutMaps;
 let didWarnAboutGenerators;
 let didWarnAboutStringRefs;
 let ownerHasKeyUseWarning;
 let ownerHasFunctionTypeWarning;
-let warnForMissingKey = (child: mixed, returnFiber: Fiber) => { };
+let warnForMissingKey = (child: mixed, returnFiber: Fiber) => {};
 
 if (__DEV__) {
   didWarnAboutMaps = false;
@@ -61,23 +66,23 @@ if (__DEV__) {
   ownerHasFunctionTypeWarning = {};
 
   warnForMissingKey = (child: mixed, returnFiber: Fiber) => {
-    if (child === null || typeof child !== 'object') {
+    if (child === null || typeof child !== "object") {
       return;
     }
     if (!child._store || child._store.validated || child.key != null) {
       return;
     }
 
-    if (typeof child._store !== 'object') {
+    if (typeof child._store !== "object") {
       throw new Error(
-        'React Component in warnForMissingKey should have a _store. ' +
-        'This error is likely caused by a bug in React. Please file an issue.',
+        "React Component in warnForMissingKey should have a _store. " +
+          "This error is likely caused by a bug in React. Please file an issue."
       );
     }
 
     child._store.validated = true;
 
-    const componentName = getComponentNameFromFiber(returnFiber) || 'Component';
+    const componentName = getComponentNameFromFiber(returnFiber) || "Component";
 
     if (ownerHasKeyUseWarning[componentName]) {
       return;
@@ -85,9 +90,9 @@ if (__DEV__) {
     ownerHasKeyUseWarning[componentName] = true;
 
     console.error(
-      'Each child in a list should have a unique ' +
-      '"key" prop. See https://reactjs.org/link/warning-keys for ' +
-      'more information.',
+      "Each child in a list should have a unique " +
+        '"key" prop. See https://reactjs.org/link/warning-keys for ' +
+        "more information."
     );
   };
 }
@@ -95,13 +100,13 @@ if (__DEV__) {
 function coerceRef(
   returnFiber: Fiber,
   current: Fiber | null,
-  element: ReactElement,
+  element: ReactElement
 ) {
   const mixedRef = element.ref;
   if (
     mixedRef !== null &&
-    typeof mixedRef !== 'function' &&
-    typeof mixedRef !== 'object'
+    typeof mixedRef !== "function" &&
+    typeof mixedRef !== "object"
   ) {
     if (__DEV__) {
       // TODO: Clean this up once we turn on the string ref warning for
@@ -118,26 +123,26 @@ function coerceRef(
         )
       ) {
         const componentName =
-          getComponentNameFromFiber(returnFiber) || 'Component';
+          getComponentNameFromFiber(returnFiber) || "Component";
         if (!didWarnAboutStringRefs[componentName]) {
           if (warnAboutStringRefs) {
             console.error(
               'Component "%s" contains the string ref "%s". Support for string refs ' +
-              'will be removed in a future major release. We recommend using ' +
-              'useRef() or createRef() instead. ' +
-              'Learn more about using refs safely here: ' +
-              'https://reactjs.org/link/strict-mode-string-ref',
+                "will be removed in a future major release. We recommend using " +
+                "useRef() or createRef() instead. " +
+                "Learn more about using refs safely here: " +
+                "https://reactjs.org/link/strict-mode-string-ref",
               componentName,
-              mixedRef,
+              mixedRef
             );
           } else {
             console.error(
               'A string ref, "%s", has been found within a strict mode tree. ' +
-              'String refs are a source of potential bugs and should be avoided. ' +
-              'We recommend using useRef() or createRef() instead. ' +
-              'Learn more about using refs safely here: ' +
-              'https://reactjs.org/link/strict-mode-string-ref',
-              mixedRef,
+                "String refs are a source of potential bugs and should be avoided. " +
+                "We recommend using useRef() or createRef() instead. " +
+                "Learn more about using refs safely here: " +
+                "https://reactjs.org/link/strict-mode-string-ref",
+              mixedRef
             );
           }
           didWarnAboutStringRefs[componentName] = true;
@@ -153,10 +158,10 @@ function coerceRef(
 
         if (ownerFiber.tag !== ClassComponent) {
           throw new Error(
-            'Function components cannot have string refs. ' +
-            'We recommend using useRef() instead. ' +
-            'Learn more about using refs safely here: ' +
-            'https://reactjs.org/link/strict-mode-string-ref',
+            "Function components cannot have string refs. " +
+              "We recommend using useRef() instead. " +
+              "Learn more about using refs safely here: " +
+              "https://reactjs.org/link/strict-mode-string-ref"
           );
         }
 
@@ -166,21 +171,21 @@ function coerceRef(
       if (!inst) {
         throw new Error(
           `Missing owner for string ref ${mixedRef}. This error is likely caused by a ` +
-          'bug in React. Please file an issue.',
+            "bug in React. Please file an issue."
         );
       }
       // Assigning this to a const so Flow knows it won't change in the closure
       const resolvedInst = inst;
 
       if (__DEV__) {
-        checkPropStringCoercion(mixedRef, 'ref');
+        checkPropStringCoercion(mixedRef, "ref");
       }
-      const stringRef = '' + mixedRef;
+      const stringRef = "" + mixedRef;
       // Check if previous string ref matches new string ref
       if (
         current !== null &&
         current.ref !== null &&
-        typeof current.ref === 'function' &&
+        typeof current.ref === "function" &&
         current.ref._stringRef === stringRef
       ) {
         return current.ref;
@@ -200,20 +205,20 @@ function coerceRef(
       ref._stringRef = stringRef;
       return ref;
     } else {
-      if (typeof mixedRef !== 'string') {
+      if (typeof mixedRef !== "string") {
         throw new Error(
-          'Expected ref to be a function, a string, an object returned by React.createRef(), or null.',
+          "Expected ref to be a function, a string, an object returned by React.createRef(), or null."
         );
       }
 
       if (!element._owner) {
         throw new Error(
           `Element ref was specified as a string (${mixedRef}) but no owner was set. This could happen for one of` +
-          ' the following reasons:\n' +
-          '1. You may be adding a ref to a function component\n' +
-          "2. You may be adding a ref to a component that was not created inside a component's render method\n" +
-          '3. You have multiple copies of React loaded\n' +
-          'See https://reactjs.org/link/refs-must-have-owner for more information.',
+            " the following reasons:\n" +
+            "1. You may be adding a ref to a function component\n" +
+            "2. You may be adding a ref to a component that was not created inside a component's render method\n" +
+            "3. You have multiple copies of React loaded\n" +
+            "See https://reactjs.org/link/refs-must-have-owner for more information."
         );
       }
     }
@@ -225,18 +230,19 @@ function throwOnInvalidObjectType(returnFiber: Fiber, newChild: Object) {
   const childString = Object.prototype.toString.call(newChild);
 
   throw new Error(
-    `Objects are not valid as a React child (found: ${childString === '[object Object]'
-      ? 'object with keys {' + Object.keys(newChild).join(', ') + '}'
-      : childString
+    `Objects are not valid as a React child (found: ${
+      childString === "[object Object]"
+        ? "object with keys {" + Object.keys(newChild).join(", ") + "}"
+        : childString
     }). ` +
-    'If you meant to render a collection of children, use an array ' +
-    'instead.',
+      "If you meant to render a collection of children, use an array " +
+      "instead."
   );
 }
 
 function warnOnFunctionType(returnFiber: Fiber) {
   if (__DEV__) {
-    const componentName = getComponentNameFromFiber(returnFiber) || 'Component';
+    const componentName = getComponentNameFromFiber(returnFiber) || "Component";
 
     if (ownerHasFunctionTypeWarning[componentName]) {
       return;
@@ -244,9 +250,9 @@ function warnOnFunctionType(returnFiber: Fiber) {
     ownerHasFunctionTypeWarning[componentName] = true;
 
     console.error(
-      'Functions are not valid as a React child. This may happen if ' +
-      'you return a Component instead of <Component /> from render. ' +
-      'Or maybe you meant to call this function rather than return it.',
+      "Functions are not valid as a React child. This may happen if " +
+        "you return a Component instead of <Component /> from render. " +
+        "Or maybe you meant to call this function rather than return it."
     );
   }
 }
@@ -278,7 +284,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
   function deleteRemainingChildren(
     returnFiber: Fiber,
-    currentFirstChild: Fiber | null,
+    currentFirstChild: Fiber | null
   ): null {
     if (!shouldTrackSideEffects) {
       // Noop.
@@ -297,7 +303,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
   function mapRemainingChildren(
     returnFiber: Fiber,
-    currentFirstChild: Fiber,
+    currentFirstChild: Fiber
   ): Map<string | number, Fiber> {
     // Add the remaining children to a temporary map so that we can find them by
     // keys quickly. Implicit (null) keys get added to this set with their index
@@ -339,19 +345,19 @@ function ChildReconciler(shouldTrackSideEffects) {
   }
 
   /**
- * Determines the placement of a child fiber in the list of new children.
- *
- * 该函数决定一个子节点（fiber）在新子节点列表中的位置，并设置相应的 `flags` 标志以指示是否需要移动或插入该节点。
- *
- * @param {Fiber} newFiber - 新创建或更新的子节点（fiber）。
- * @param {number} lastPlacedIndex - 上一个已正确放置的子节点的索引。
- * @param {number} newIndex - 当前新子节点的索引。
- * @returns {number} - 返回此子节点的实际放置索引，用于下一个子节点的比较。
- */
+   * Determines the placement of a child fiber in the list of new children.
+   *
+   * 该函数决定一个子节点（fiber）在新子节点列表中的位置，并设置相应的 `flags` 标志以指示是否需要移动或插入该节点。
+   *
+   * @param {Fiber} newFiber - 新创建或更新的子节点（fiber）。
+   * @param {number} lastPlacedIndex - 上一个已正确放置的子节点的索引。
+   * @param {number} newIndex - 当前新子节点的索引。
+   * @returns {number} - 返回此子节点的实际放置索引，用于下一个子节点的比较。
+   */
   function placeChild(
     newFiber: Fiber,
     lastPlacedIndex: number,
-    newIndex: number,
+    newIndex: number
   ): number {
     // 将当前子节点的 index 属性设置为新的索引值。
     newFiber.index = newIndex;
@@ -404,7 +410,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     current: Fiber | null,
     textContent: string,
-    lanes: Lanes,
+    lanes: Lanes
   ) {
     if (current === null || current.tag !== HostText) {
       // Insert
@@ -423,7 +429,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     current: Fiber | null,
     element: ReactElement,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber {
     const elementType = element.type;
     if (elementType === REACT_FRAGMENT_TYPE) {
@@ -432,7 +438,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         current,
         element.props.children,
         lanes,
-        element.key,
+        element.key
       );
     }
     if (current !== null) {
@@ -446,7 +452,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         // We need to do this after the Hot Reloading check above,
         // because hot reloading has different semantics than prod because
         // it doesn't resuspend. So we can't let the call below suspend.
-        (typeof elementType === 'object' &&
+        (typeof elementType === "object" &&
           elementType !== null &&
           elementType.$$typeof === REACT_LAZY_TYPE &&
           resolveLazy(elementType) === current.type)
@@ -473,7 +479,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     current: Fiber | null,
     portal: ReactPortal,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber {
     if (
       current === null ||
@@ -498,7 +504,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     current: Fiber | null,
     fragment: Iterable<*>,
     lanes: Lanes,
-    key: null | string,
+    key: null | string
   ): Fiber {
     if (current === null || current.tag !== Fragment) {
       // Insert
@@ -506,7 +512,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         fragment,
         returnFiber.mode,
         lanes,
-        key,
+        key
       );
       created.return = returnFiber;
       return created;
@@ -521,31 +527,31 @@ function ChildReconciler(shouldTrackSideEffects) {
   function createChild(
     returnFiber: Fiber,
     newChild: any,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
     if (
-      (typeof newChild === 'string' && newChild !== '') ||
-      typeof newChild === 'number'
+      (typeof newChild === "string" && newChild !== "") ||
+      typeof newChild === "number"
     ) {
       // Text nodes don't have keys. If the previous node is implicitly keyed
       // we can continue to replace it without aborting even if it is not a text
       // node.
       const created = createFiberFromText(
-        '' + newChild,
+        "" + newChild,
         returnFiber.mode,
-        lanes,
+        lanes
       );
       created.return = returnFiber;
       return created;
     }
 
-    if (typeof newChild === 'object' && newChild !== null) {
+    if (typeof newChild === "object" && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
           const created = createFiberFromElement(
             newChild,
             returnFiber.mode,
-            lanes,
+            lanes
           );
           created.ref = coerceRef(returnFiber, null, newChild);
           created.return = returnFiber;
@@ -555,7 +561,7 @@ function ChildReconciler(shouldTrackSideEffects) {
           const created = createFiberFromPortal(
             newChild,
             returnFiber.mode,
-            lanes,
+            lanes
           );
           created.return = returnFiber;
           return created;
@@ -572,7 +578,7 @@ function ChildReconciler(shouldTrackSideEffects) {
           newChild,
           returnFiber.mode,
           lanes,
-          null,
+          null
         );
         created.return = returnFiber;
         return created;
@@ -582,7 +588,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     if (__DEV__) {
-      if (typeof newChild === 'function') {
+      if (typeof newChild === "function") {
         warnOnFunctionType(returnFiber);
       }
     }
@@ -594,7 +600,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     oldFiber: Fiber | null,
     newChild: any,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
     // 获取旧节点的 key，如果旧节点存在的话。
     const key = oldFiber !== null ? oldFiber.key : null;
@@ -602,19 +608,19 @@ function ChildReconciler(shouldTrackSideEffects) {
     // 如果新节点是一个非空字符串或数字，这意味着它是一个文本节点。
     // 文本节点没有 key，如果旧节点有 key，则不能复用，返回 null。
     if (
-      (typeof newChild === 'string' && newChild !== '') ||
-      typeof newChild === 'number'
+      (typeof newChild === "string" && newChild !== "") ||
+      typeof newChild === "number"
     ) {
       // 如果旧节点有 key，则不能复用旧节点，直接返回 null。
       if (key !== null) {
         return null;
       }
       // 如果没有 key 或者 key 为空，则更新为一个新的文本节点。
-      return updateTextNode(returnFiber, oldFiber, '' + newChild, lanes);
+      return updateTextNode(returnFiber, oldFiber, "" + newChild, lanes);
     }
 
     // 如果新节点是一个对象且不为 null，进一步检查其类型。
-    if (typeof newChild === 'object' && newChild !== null) {
+    if (typeof newChild === "object" && newChild !== null) {
       // 根据新节点的类型执行不同的更新操作。
       switch (newChild.$$typeof) {
         // 如果新节点是一个 React 元素。
@@ -661,7 +667,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
     // 在开发环境中，如果新节点是一个函数类型，发出警告。
     if (__DEV__) {
-      if (typeof newChild === 'function') {
+      if (typeof newChild === "function") {
         warnOnFunctionType(returnFiber);
       }
     }
@@ -675,31 +681,31 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     newIdx: number,
     newChild: any,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
     if (
-      (typeof newChild === 'string' && newChild !== '') ||
-      typeof newChild === 'number'
+      (typeof newChild === "string" && newChild !== "") ||
+      typeof newChild === "number"
     ) {
       // Text nodes don't have keys, so we neither have to check the old nor
       // new node for the key. If both are text nodes, they match.
       const matchedFiber = existingChildren.get(newIdx) || null;
-      return updateTextNode(returnFiber, matchedFiber, '' + newChild, lanes);
+      return updateTextNode(returnFiber, matchedFiber, "" + newChild, lanes);
     }
 
-    if (typeof newChild === 'object' && newChild !== null) {
+    if (typeof newChild === "object" && newChild !== null) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE: {
           const matchedFiber =
             existingChildren.get(
-              newChild.key === null ? newIdx : newChild.key,
+              newChild.key === null ? newIdx : newChild.key
             ) || null;
           return updateElement(returnFiber, matchedFiber, newChild, lanes);
         }
         case REACT_PORTAL_TYPE: {
           const matchedFiber =
             existingChildren.get(
-              newChild.key === null ? newIdx : newChild.key,
+              newChild.key === null ? newIdx : newChild.key
             ) || null;
           return updatePortal(returnFiber, matchedFiber, newChild, lanes);
         }
@@ -711,7 +717,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             returnFiber,
             newIdx,
             init(payload),
-            lanes,
+            lanes
           );
       }
 
@@ -724,7 +730,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     if (__DEV__) {
-      if (typeof newChild === 'function') {
+      if (typeof newChild === "function") {
         warnOnFunctionType(returnFiber);
       }
     }
@@ -738,10 +744,10 @@ function ChildReconciler(shouldTrackSideEffects) {
   function warnOnInvalidKey(
     child: mixed,
     knownKeys: Set<string> | null,
-    returnFiber: Fiber,
+    returnFiber: Fiber
   ): Set<string> | null {
     if (__DEV__) {
-      if (typeof child !== 'object' || child === null) {
+      if (typeof child !== "object" || child === null) {
         return knownKeys;
       }
       switch (child.$$typeof) {
@@ -749,7 +755,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         case REACT_PORTAL_TYPE:
           warnForMissingKey(child, returnFiber);
           const key = child.key;
-          if (typeof key !== 'string') {
+          if (typeof key !== "string") {
             break;
           }
           if (knownKeys === null) {
@@ -762,12 +768,12 @@ function ChildReconciler(shouldTrackSideEffects) {
             break;
           }
           console.error(
-            'Encountered two children with the same key, `%s`. ' +
-            'Keys should be unique so that components maintain their identity ' +
-            'across updates. Non-unique keys may cause children to be ' +
-            'duplicated and/or omitted — the behavior is unsupported and ' +
-            'could change in a future version.',
-            key,
+            "Encountered two children with the same key, `%s`. " +
+              "Keys should be unique so that components maintain their identity " +
+              "across updates. Non-unique keys may cause children to be " +
+              "duplicated and/or omitted — the behavior is unsupported and " +
+              "could change in a future version.",
+            key
           );
           break;
         case REACT_LAZY_TYPE:
@@ -785,9 +791,9 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     newChildren: Array<*>,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
-    // console.log("reconcileChildrenArray", newChildren);
+    console.log("reconcileChildrenArray", newChildren);
     // 这个算法不能通过从两端同时搜索来优化，因为我们没有在 fiber 上的回溯指针。
     // 我们尝试看看在这个模型下能做到什么。如果发现不值得这种权衡，我们可以稍后添加。
 
@@ -831,7 +837,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         returnFiber,
         oldFiber,
         newChildren[newIdx],
-        lanes,
+        lanes
       );
       if (newFiber === null) {
         // 如果新 Fiber 为空，表示更新失败。
@@ -905,7 +911,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         returnFiber,
         newIdx,
         newChildren[newIdx],
-        lanes,
+        lanes
       );
       if (newFiber !== null) {
         if (shouldTrackSideEffects) {
@@ -913,7 +919,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             // 新 Fiber 是正在工作的，但如果存在当前 Fiber，表示我们复用了它。
             // 需要从 child 列表中删除它，以便我们不将其添加到删除列表中。
             existingChildren.delete(
-              newFiber.key === null ? newIdx : newFiber.key,
+              newFiber.key === null ? newIdx : newFiber.key
             );
           }
         }
@@ -931,7 +937,7 @@ function ChildReconciler(shouldTrackSideEffects) {
 
     if (shouldTrackSideEffects) {
       // 对于未被上面处理的旧子节点，需要将其添加到删除列表中。
-      existingChildren.forEach(child => deleteChild(returnFiber, child));
+      existingChildren.forEach((child) => deleteChild(returnFiber, child));
     }
 
     if (getIsHydrating()) {
@@ -946,17 +952,17 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     newChildrenIterable: Iterable<*>,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
     // This is the same implementation as reconcileChildrenArray(),
     // but using the iterator instead.
 
     const iteratorFn = getIteratorFn(newChildrenIterable);
 
-    if (typeof iteratorFn !== 'function') {
+    if (typeof iteratorFn !== "function") {
       throw new Error(
-        'An object is not an iterable. This error is likely caused by a bug in ' +
-        'React. Please file an issue.',
+        "An object is not an iterable. This error is likely caused by a bug in " +
+          "React. Please file an issue."
       );
     }
 
@@ -964,17 +970,17 @@ function ChildReconciler(shouldTrackSideEffects) {
       // We don't support rendering Generators because it's a mutation.
       // See https://github.com/facebook/react/issues/12995
       if (
-        typeof Symbol === 'function' &&
+        typeof Symbol === "function" &&
         // $FlowFixMe Flow doesn't know about toStringTag
-        newChildrenIterable[Symbol.toStringTag] === 'Generator'
+        newChildrenIterable[Symbol.toStringTag] === "Generator"
       ) {
         if (!didWarnAboutGenerators) {
           console.error(
-            'Using Generators as children is unsupported and will likely yield ' +
-            'unexpected results because enumerating a generator mutates it. ' +
-            'You may convert it to an array with `Array.from()` or the ' +
-            '`[...spread]` operator before rendering. Keep in mind ' +
-            'you might need to polyfill these features for older browsers.',
+            "Using Generators as children is unsupported and will likely yield " +
+              "unexpected results because enumerating a generator mutates it. " +
+              "You may convert it to an array with `Array.from()` or the " +
+              "`[...spread]` operator before rendering. Keep in mind " +
+              "you might need to polyfill these features for older browsers."
           );
         }
         didWarnAboutGenerators = true;
@@ -984,8 +990,8 @@ function ChildReconciler(shouldTrackSideEffects) {
       if ((newChildrenIterable: any).entries === iteratorFn) {
         if (!didWarnAboutMaps) {
           console.error(
-            'Using Maps as children is not supported. ' +
-            'Use an array of keyed ReactElements instead.',
+            "Using Maps as children is not supported. " +
+              "Use an array of keyed ReactElements instead."
           );
         }
         didWarnAboutMaps = true;
@@ -1007,7 +1013,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     const newChildren = iteratorFn.call(newChildrenIterable);
 
     if (newChildren == null) {
-      throw new Error('An iterable object provided no iterator.');
+      throw new Error("An iterable object provided no iterator.");
     }
 
     let resultingFirstChild: Fiber | null = null;
@@ -1107,7 +1113,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         returnFiber,
         newIdx,
         step.value,
-        lanes,
+        lanes
       );
       if (newFiber !== null) {
         if (shouldTrackSideEffects) {
@@ -1117,7 +1123,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             // it from the child list so that we don't add it to the deletion
             // list.
             existingChildren.delete(
-              newFiber.key === null ? newIdx : newFiber.key,
+              newFiber.key === null ? newIdx : newFiber.key
             );
           }
         }
@@ -1134,7 +1140,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     if (shouldTrackSideEffects) {
       // Any existing children that weren't consumed above were deleted. We need
       // to add them to the deletion list.
-      existingChildren.forEach(child => deleteChild(returnFiber, child));
+      existingChildren.forEach((child) => deleteChild(returnFiber, child));
     }
 
     if (getIsHydrating()) {
@@ -1148,7 +1154,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     textContent: string,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber {
     // There's no need to check for keys on text nodes since we don't have a
     // way to define them.
@@ -1172,7 +1178,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     element: ReactElement,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber {
     const key = element.key;
     let child = currentFirstChild;
@@ -1203,7 +1209,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             // We need to do this after the Hot Reloading check above,
             // because hot reloading has different semantics than prod because
             // it doesn't resuspend. So we can't let the call below suspend.
-            (typeof elementType === 'object' &&
+            (typeof elementType === "object" &&
               elementType !== null &&
               elementType.$$typeof === REACT_LAZY_TYPE &&
               resolveLazy(elementType) === child.type)
@@ -1233,7 +1239,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         element.props.children,
         returnFiber.mode,
         lanes,
-        element.key,
+        element.key
       );
       created.return = returnFiber;
       return created;
@@ -1249,7 +1255,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     portal: ReactPortal,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber {
     const key = portal.key;
     let child = currentFirstChild;
@@ -1282,22 +1288,22 @@ function ChildReconciler(shouldTrackSideEffects) {
   }
 
   /**
- * Reconciles the children of a Fiber node with the new children.
- *
- * 这个函数负责协调（reconcile）Fiber节点的子节点与新子节点之间的差异，并生成新的Fiber结构。
- * 这个过程会遍历子节点树，并根据新旧节点的差异来决定如何更新、插入或删除节点。
- *
- * @param {Fiber} returnFiber - 当前Fiber节点的父节点。
- * @param {Fiber | null} currentFirstChild - 当前Fiber子节点链表的第一个节点。
- * @param {any} newChild - 新的子节点，可以是单一节点、数组、迭代器或其他类型。
- * @param {Lanes} lanes - 更新优先级，决定哪些更新应优先处理。
- * @returns {Fiber | null} - 返回新的子节点Fiber树的第一个节点。
- */
+   * Reconciles the children of a Fiber node with the new children.
+   *
+   * 这个函数负责协调（reconcile）Fiber节点的子节点与新子节点之间的差异，并生成新的Fiber结构。
+   * 这个过程会遍历子节点树，并根据新旧节点的差异来决定如何更新、插入或删除节点。
+   *
+   * @param {Fiber} returnFiber - 当前Fiber节点的父节点。
+   * @param {Fiber | null} currentFirstChild - 当前Fiber子节点链表的第一个节点。
+   * @param {any} newChild - 新的子节点，可以是单一节点、数组、迭代器或其他类型。
+   * @param {Lanes} lanes - 更新优先级，决定哪些更新应优先处理。
+   * @returns {Fiber | null} - 返回新的子节点Fiber树的第一个节点。
+   */
   function reconcileChildFibers(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
     newChild: any,
-    lanes: Lanes,
+    lanes: Lanes
   ): Fiber | null {
     // 这个函数不是递归的。
     // 如果顶层元素是数组，我们将其视为一组子节点，而不是片段。
@@ -1308,7 +1314,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     // 这会导致 <>{[...]}</> 和 <>...</> 之间的歧义。
     // 我们对以上的模糊情况采用相同的处理方式。
     const isUnkeyedTopLevelFragment =
-      typeof newChild === 'object' &&
+      typeof newChild === "object" &&
       newChild !== null &&
       newChild.type === REACT_FRAGMENT_TYPE &&
       newChild.key === null;
@@ -1318,7 +1324,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     // 处理对象类型的子节点
-    if (typeof newChild === 'object' && newChild !== null) {
+    if (typeof newChild === "object" && newChild !== null) {
       // console.log("newChild.$$typeof", newChild.$$typeof);
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
@@ -1329,8 +1335,8 @@ function ChildReconciler(shouldTrackSideEffects) {
               returnFiber,
               currentFirstChild,
               newChild,
-              lanes,
-            ),
+              lanes
+            )
           );
         case REACT_PORTAL_TYPE:
           // 如果新子节点是一个 React 门户（Portal），则调用 `reconcileSinglePortal` 函数，
@@ -1340,8 +1346,8 @@ function ChildReconciler(shouldTrackSideEffects) {
               returnFiber,
               currentFirstChild,
               newChild,
-              lanes,
-            ),
+              lanes
+            )
           );
         case REACT_LAZY_TYPE:
           // 如果新子节点是一个 React 懒加载组件（Lazy Component），
@@ -1352,7 +1358,7 @@ function ChildReconciler(shouldTrackSideEffects) {
             returnFiber,
             currentFirstChild,
             init(payload),
-            lanes,
+            lanes
           );
       }
 
@@ -1362,7 +1368,7 @@ function ChildReconciler(shouldTrackSideEffects) {
           returnFiber,
           currentFirstChild,
           newChild,
-          lanes,
+          lanes
         );
       }
 
@@ -1372,7 +1378,7 @@ function ChildReconciler(shouldTrackSideEffects) {
           returnFiber,
           currentFirstChild,
           newChild,
-          lanes,
+          lanes
         );
       }
 
@@ -1383,22 +1389,22 @@ function ChildReconciler(shouldTrackSideEffects) {
     // 如果新子节点是字符串或数字类型的文本节点，则调用 `reconcileSingleTextNode` 进行协调，
     // 并使用 `placeSingleChild` 确定其位置。
     if (
-      (typeof newChild === 'string' && newChild !== '') ||
-      typeof newChild === 'number'
+      (typeof newChild === "string" && newChild !== "") ||
+      typeof newChild === "number"
     ) {
       return placeSingleChild(
         reconcileSingleTextNode(
           returnFiber,
           currentFirstChild,
-          '' + newChild,
-          lanes,
-        ),
+          "" + newChild,
+          lanes
+        )
       );
     }
 
     // 在开发环境下，如果新子节点是函数类型，则发出警告。
     if (__DEV__) {
-      if (typeof newChild === 'function') {
+      if (typeof newChild === "function") {
         warnOnFunctionType(returnFiber);
       }
     }
@@ -1415,10 +1421,10 @@ export const mountChildFibers = ChildReconciler(false);
 
 export function cloneChildFibers(
   current: Fiber | null,
-  workInProgress: Fiber,
+  workInProgress: Fiber
 ): void {
   if (current !== null && workInProgress.child !== current.child) {
-    throw new Error('Resuming work not yet implemented.');
+    throw new Error("Resuming work not yet implemented.");
   }
 
   if (workInProgress.child === null) {
@@ -1434,7 +1440,7 @@ export function cloneChildFibers(
     currentChild = currentChild.sibling;
     newChild = newChild.sibling = createWorkInProgress(
       currentChild,
-      currentChild.pendingProps,
+      currentChild.pendingProps
     );
     newChild.return = workInProgress;
   }
