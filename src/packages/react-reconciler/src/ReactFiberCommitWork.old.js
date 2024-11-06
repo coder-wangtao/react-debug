@@ -14,22 +14,22 @@ import type {
   Container,
   ChildSet,
   UpdatePayload,
-} from './ReactFiberHostConfig';
-import type { Fiber } from './ReactInternalTypes';
-import type { FiberRoot } from './ReactInternalTypes';
-import type { Lanes } from './ReactFiberLane.old';
-import type { SuspenseState } from './ReactFiberSuspenseComponent.old';
-import type { UpdateQueue } from './ReactFiberClassUpdateQueue.old';
-import type { FunctionComponentUpdateQueue } from './ReactFiberHooks.old';
-import type { Wakeable } from 'shared/ReactTypes';
+} from "./ReactFiberHostConfig";
+import type { Fiber } from "./ReactInternalTypes";
+import type { FiberRoot } from "./ReactInternalTypes";
+import type { Lanes } from "./ReactFiberLane.old";
+import type { SuspenseState } from "./ReactFiberSuspenseComponent.old";
+import type { UpdateQueue } from "./ReactFiberClassUpdateQueue.old";
+import type { FunctionComponentUpdateQueue } from "./ReactFiberHooks.old";
+import type { Wakeable } from "shared/ReactTypes";
 import type {
   OffscreenState,
   OffscreenInstance,
-} from './ReactFiberOffscreenComponent';
-import type { HookFlags } from './ReactHookEffectTags';
-import type { Cache } from './ReactFiberCacheComponent.old';
-import type { RootState } from './ReactFiberRoot.old';
-import type { Transition } from './ReactFiberTracingMarkerComponent.old';
+} from "./ReactFiberOffscreenComponent";
+import type { HookFlags } from "./ReactHookEffectTags";
+import type { Cache } from "./ReactFiberCacheComponent.old";
+import type { RootState } from "./ReactFiberRoot.old";
+import type { Transition } from "./ReactFiberTracingMarkerComponent.old";
 
 import {
   enableCreateEventHandleAPI,
@@ -45,7 +45,7 @@ import {
   enableUpdaterTracking,
   enableCache,
   enableTransitionTracing,
-} from 'shared/ReactFeatureFlags';
+} from "shared/ReactFeatureFlags";
 import {
   FunctionComponent,
   ForwardRef,
@@ -66,8 +66,8 @@ import {
   LegacyHiddenComponent,
   CacheComponent,
   TracingMarkerComponent,
-} from './ReactWorkTags';
-import { detachDeletedInstance } from './ReactFiberHostConfig';
+} from "./ReactWorkTags";
+import { detachDeletedInstance } from "./ReactFiberHostConfig";
 import {
   NoFlags,
   ContentReset,
@@ -83,14 +83,14 @@ import {
   LayoutMask,
   PassiveMask,
   Visibility,
-} from './ReactFiberFlags';
-import getComponentNameFromFiber from 'react-reconciler/src/getComponentNameFromFiber';
+} from "./ReactFiberFlags";
+import getComponentNameFromFiber from "react-reconciler/src/getComponentNameFromFiber";
 import {
   resetCurrentFiber as resetCurrentDebugFiberInDEV,
   setCurrentFiber as setCurrentDebugFiberInDEV,
   getCurrentFiber as getCurrentDebugFiberInDEV,
-} from './ReactCurrentFiber';
-import { resolveDefaultProps } from './ReactFiberLazyComponent.old';
+} from "./ReactCurrentFiber";
+import { resolveDefaultProps } from "./ReactFiberLazyComponent.old";
 import {
   isCurrentUpdateNested,
   getCommitTime,
@@ -98,9 +98,9 @@ import {
   startLayoutEffectTimer,
   recordPassiveEffectDuration,
   startPassiveEffectTimer,
-} from './ReactProfilerTimer.old';
-import { ConcurrentMode, NoMode, ProfileMode } from './ReactTypeOfMode';
-import { commitUpdateQueue } from './ReactFiberClassUpdateQueue.old';
+} from "./ReactProfilerTimer.old";
+import { ConcurrentMode, NoMode, ProfileMode } from "./ReactTypeOfMode";
+import { commitUpdateQueue } from "./ReactFiberClassUpdateQueue.old";
 import {
   getPublicInstance,
   supportsMutation,
@@ -130,7 +130,7 @@ import {
   prepareScopeUpdate,
   prepareForCommit,
   beforeActiveInstanceBlur,
-} from './ReactFiberHostConfig';
+} from "./ReactFiberHostConfig";
 import {
   captureCommitPhaseError,
   resolveRetryWakeable,
@@ -140,17 +140,20 @@ import {
   addTransitionStartCallbackToPendingTransition,
   addTransitionCompleteCallbackToPendingTransition,
   setIsRunningInsertionEffect,
-} from './ReactFiberWorkLoop.old';
+} from "./ReactFiberWorkLoop.old";
 import {
   NoFlags as NoHookEffect,
   HasEffect as HookHasEffect,
   Layout as HookLayout,
   Insertion as HookInsertion,
   Passive as HookPassive,
-} from './ReactHookEffectTags';
-import { didWarnAboutReassigningProps } from './ReactFiberBeginWork.old';
-import { doesFiberContain } from './ReactFiberTreeReflection';
-import { invokeGuardedCallback, clearCaughtError } from 'shared/ReactErrorUtils';
+} from "./ReactHookEffectTags";
+import { didWarnAboutReassigningProps } from "./ReactFiberBeginWork.old";
+import { doesFiberContain } from "./ReactFiberTreeReflection";
+import {
+  invokeGuardedCallback,
+  clearCaughtError,
+} from "shared/ReactErrorUtils";
 import {
   isDevToolsPresent,
   markComponentPassiveEffectMountStarted,
@@ -162,9 +165,9 @@ import {
   markComponentLayoutEffectUnmountStarted,
   markComponentLayoutEffectUnmountStopped,
   onCommitUnmount,
-} from './ReactFiberDevToolsHook.old';
-import { releaseCache, retainCache } from './ReactFiberCacheComponent.old';
-import { clearTransitionsForLanes } from './ReactFiberLane.old';
+} from "./ReactFiberDevToolsHook.old";
+import { releaseCache, retainCache } from "./ReactFiberCacheComponent.old";
+import { clearTransitionsForLanes } from "./ReactFiberLane.old";
 
 let didWarnAboutUndefinedSnapshotBeforeUpdate: Set<mixed> | null = null;
 if (__DEV__) {
@@ -177,7 +180,7 @@ if (__DEV__) {
 let offscreenSubtreeIsHidden: boolean = false;
 let offscreenSubtreeWasHidden: boolean = false;
 
-const PossiblyWeakSet = typeof WeakSet === 'function' ? WeakSet : Set;
+const PossiblyWeakSet = typeof WeakSet === "function" ? WeakSet : Set;
 
 let nextEffect: Fiber | null = null;
 
@@ -221,7 +224,7 @@ const callComponentWillUnmountWithTimer = function (current, instance) {
 // Capture errors so they don't interrupt mounting.
 function safelyCallCommitHookLayoutEffectListMount(
   current: Fiber,
-  nearestMountedAncestor: Fiber | null,
+  nearestMountedAncestor: Fiber | null
 ) {
   try {
     commitHookEffectListMount(HookLayout, current);
@@ -234,7 +237,7 @@ function safelyCallCommitHookLayoutEffectListMount(
 function safelyCallComponentWillUnmount(
   current: Fiber,
   nearestMountedAncestor: Fiber | null,
-  instance: any,
+  instance: any
 ) {
   try {
     callComponentWillUnmountWithTimer(current, instance);
@@ -247,7 +250,7 @@ function safelyCallComponentWillUnmount(
 function safelyCallComponentDidMount(
   current: Fiber,
   nearestMountedAncestor: Fiber | null,
-  instance: any,
+  instance: any
 ) {
   try {
     instance.componentDidMount();
@@ -268,7 +271,7 @@ function safelyAttachRef(current: Fiber, nearestMountedAncestor: Fiber | null) {
 function safelyDetachRef(current: Fiber, nearestMountedAncestor: Fiber | null) {
   const ref = current.ref;
   if (ref !== null) {
-    if (typeof ref === 'function') {
+    if (typeof ref === "function") {
       let retVal;
       try {
         if (
@@ -289,11 +292,11 @@ function safelyDetachRef(current: Fiber, nearestMountedAncestor: Fiber | null) {
         captureCommitPhaseError(current, nearestMountedAncestor, error);
       }
       if (__DEV__) {
-        if (typeof retVal === 'function') {
+        if (typeof retVal === "function") {
           console.error(
-            'Unexpected return value from a callback ref in %s. ' +
-            'A callback ref should not return a function.',
-            getComponentNameFromFiber(current),
+            "Unexpected return value from a callback ref in %s. " +
+              "A callback ref should not return a function.",
+            getComponentNameFromFiber(current)
           );
         }
       }
@@ -306,7 +309,7 @@ function safelyDetachRef(current: Fiber, nearestMountedAncestor: Fiber | null) {
 function safelyCallDestroy(
   current: Fiber,
   nearestMountedAncestor: Fiber | null,
-  destroy: () => void,
+  destroy: () => void
 ) {
   try {
     destroy();
@@ -320,7 +323,7 @@ let shouldFireAfterActiveInstanceBlur: boolean = false;
 
 export function commitBeforeMutationEffects(
   root: FiberRoot,
-  firstChild: Fiber,
+  firstChild: Fiber
 ) {
   focusedInstanceHandle = prepareForCommit(root.containerInfo);
 
@@ -430,22 +433,22 @@ function commitBeforeMutationEffectsOnFiber(finishedWork: Fiber) {
             ) {
               if (instance.props !== finishedWork.memoizedProps) {
                 console.error(
-                  'Expected %s props to match memoized props before ' +
-                  'getSnapshotBeforeUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                  getComponentNameFromFiber(finishedWork) || 'instance',
+                  "Expected %s props to match memoized props before " +
+                    "getSnapshotBeforeUpdate. " +
+                    "This might either be because of a bug in React, or because " +
+                    "a component reassigns its own `this.props`. " +
+                    "Please file an issue.",
+                  getComponentNameFromFiber(finishedWork) || "instance"
                 );
               }
               if (instance.state !== finishedWork.memoizedState) {
                 console.error(
-                  'Expected %s state to match memoized state before ' +
-                  'getSnapshotBeforeUpdate. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.state`. ' +
-                  'Please file an issue.',
-                  getComponentNameFromFiber(finishedWork) || 'instance',
+                  "Expected %s state to match memoized state before " +
+                    "getSnapshotBeforeUpdate. " +
+                    "This might either be because of a bug in React, or because " +
+                    "a component reassigns its own `this.state`. " +
+                    "Please file an issue.",
+                  getComponentNameFromFiber(finishedWork) || "instance"
                 );
               }
             }
@@ -454,16 +457,17 @@ function commitBeforeMutationEffectsOnFiber(finishedWork: Fiber) {
             finishedWork.elementType === finishedWork.type
               ? prevProps
               : resolveDefaultProps(finishedWork.type, prevProps),
-            prevState,
+            prevState
           );
           if (__DEV__) {
-            const didWarnSet = ((didWarnAboutUndefinedSnapshotBeforeUpdate: any): Set<mixed>);
+            const didWarnSet =
+              ((didWarnAboutUndefinedSnapshotBeforeUpdate: any): Set<mixed>);
             if (snapshot === undefined && !didWarnSet.has(finishedWork.type)) {
               didWarnSet.add(finishedWork.type);
               console.error(
-                '%s.getSnapshotBeforeUpdate(): A snapshot value (or null) ' +
-                'must be returned. You have returned undefined.',
-                getComponentNameFromFiber(finishedWork),
+                "%s.getSnapshotBeforeUpdate(): A snapshot value (or null) " +
+                  "must be returned. You have returned undefined.",
+                getComponentNameFromFiber(finishedWork)
               );
             }
           }
@@ -486,8 +490,8 @@ function commitBeforeMutationEffectsOnFiber(finishedWork: Fiber) {
         break;
       default: {
         throw new Error(
-          'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
+          "This unit of work tag should not have side-effects. This error is " +
+            "likely caused by a bug in React. Please file an issue."
         );
       }
     }
@@ -512,14 +516,15 @@ function commitBeforeMutationEffectsDeletion(deletion: Fiber) {
 // 该函数用于处理 React 中 Hook 的卸载阶段副作用
 // 根据传入的 flags（如 HookPassive 或 HookLayout），执行相应的卸载操作
 function commitHookEffectListUnmount(
-  flags: HookFlags,                 // 表示要卸载的副作用类型（如 HookPassive、HookLayout）
-  finishedWork: Fiber,              // 当前 fiber 节点，表示处理的组件
+  flags: HookFlags, // 表示要卸载的副作用类型（如 HookPassive、HookLayout）
+  finishedWork: Fiber, // 当前 fiber 节点，表示处理的组件
   nearestMountedAncestor: Fiber | null // 最近的已挂载祖先节点，用于错误处理
 ) {
   // console.log("commitHookEffectListUnmount...");
 
   // 获取当前 fiber 的更新队列，包含了组件的所有 effect
-  const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
+  const updateQueue: FunctionComponentUpdateQueue | null =
+    (finishedWork.updateQueue: any);
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
 
   // 如果有副作用链表，则执行卸载逻辑
@@ -593,7 +598,8 @@ function commitHookEffectListUnmount(
 function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
   // console.log("commitHookEffectListMount...");
   // 获取当前 fiber 的更新队列
-  const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue: any);
+  const updateQueue: FunctionComponentUpdateQueue | null =
+    (finishedWork.updateQueue: any);
   const lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
 
   // 如果有副作用链表，则执行挂载副作用
@@ -606,7 +612,6 @@ function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
     do {
       // 检查当前副作用是否与传入的 flags 匹配
       if ((effect.tag & flags) === flags) {
-
         // 开启性能分析器时，会标记副作用挂载的开始与结束
         if (enableSchedulingProfiler) {
           if ((flags & HookPassive) !== NoHookEffect) {
@@ -649,49 +654,50 @@ function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
         // 开发环境下，检查销毁函数的合法性
         if (__DEV__) {
           const destroy = effect.destroy;
-          if (destroy !== undefined && typeof destroy !== 'function') {
+          if (destroy !== undefined && typeof destroy !== "function") {
             // 根据副作用类型，输出相应的 Hook 名称
             let hookName;
             if ((effect.tag & HookLayout) !== NoFlags) {
-              hookName = 'useLayoutEffect';
+              hookName = "useLayoutEffect";
             } else if ((effect.tag & HookInsertion) !== NoFlags) {
-              hookName = 'useInsertionEffect';
+              hookName = "useInsertionEffect";
             } else {
-              hookName = 'useEffect';
+              hookName = "useEffect";
             }
 
             // 输出详细的错误信息，如果销毁函数不符合要求
             let addendum;
             if (destroy === null) {
-              addendum = ' You returned null. If your effect does not require clean ' +
-                'up, return undefined (or nothing).';
-            } else if (typeof destroy.then === 'function') {
               addendum =
-                '\n\nIt looks like you wrote ' +
+                " You returned null. If your effect does not require clean " +
+                "up, return undefined (or nothing).";
+            } else if (typeof destroy.then === "function") {
+              addendum =
+                "\n\nIt looks like you wrote " +
                 hookName +
-                '(async () => ...) or returned a Promise. ' +
-                'Instead, write the async function inside your effect ' +
-                'and call it immediately:\n\n' +
+                "(async () => ...) or returned a Promise. " +
+                "Instead, write the async function inside your effect " +
+                "and call it immediately:\n\n" +
                 hookName +
-                '(() => {\n' +
-                '  async function fetchData() {\n' +
-                '    // You can await here\n' +
-                '    const response = await MyAPI.getData(someId);\n' +
-                '    // ...\n' +
-                '  }\n' +
-                '  fetchData();\n' +
+                "(() => {\n" +
+                "  async function fetchData() {\n" +
+                "    // You can await here\n" +
+                "    const response = await MyAPI.getData(someId);\n" +
+                "    // ...\n" +
+                "  }\n" +
+                "  fetchData();\n" +
                 `}, [someId]); // Or [] if effect doesn't need props or state\n\n` +
-                'Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching';
+                "Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching";
             } else {
-              addendum = ' You returned: ' + destroy;
+              addendum = " You returned: " + destroy;
             }
 
             // 打印错误信息，提示用户副作用函数返回了非法的值
             console.error(
-              '%s must not return anything besides a function, ' +
-              'which is used for clean-up.%s',
+              "%s must not return anything besides a function, " +
+                "which is used for clean-up.%s",
               hookName,
-              addendum,
+              addendum
             );
           }
         }
@@ -705,7 +711,7 @@ function commitHookEffectListMount(flags: HookFlags, finishedWork: Fiber) {
 
 export function commitPassiveEffectDurations(
   finishedRoot: FiberRoot,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ): void {
   if (enableProfilerTimer && enableProfilerCommitHooks) {
     // Only Profilers with work in their subtree will have an Update effect scheduled.
@@ -719,14 +725,14 @@ export function commitPassiveEffectDurations(
           // It does not get reset until the start of the next commit phase.
           const commitTime = getCommitTime();
 
-          let phase = finishedWork.alternate === null ? 'mount' : 'update';
+          let phase = finishedWork.alternate === null ? "mount" : "update";
           if (enableProfilerNestedUpdatePhase) {
             if (isCurrentUpdateNested()) {
-              phase = 'nested-update';
+              phase = "nested-update";
             }
           }
 
-          if (typeof onPostCommit === 'function') {
+          if (typeof onPostCommit === "function") {
             onPostCommit(id, phase, passiveEffectDuration, commitTime);
           }
 
@@ -759,7 +765,7 @@ function commitLayoutEffectOnFiber(
   finishedRoot: FiberRoot,
   current: Fiber | null,
   finishedWork: Fiber,
-  committedLanes: Lanes,
+  committedLanes: Lanes
 ): void {
   if ((finishedWork.flags & LayoutMask) !== NoFlags) {
     switch (finishedWork.tag) {
@@ -783,7 +789,7 @@ function commitLayoutEffectOnFiber(
               startLayoutEffectTimer();
               commitHookEffectListMount(
                 HookLayout | HookHasEffect,
-                finishedWork,
+                finishedWork
               );
             } finally {
               recordLayoutEffectDuration(finishedWork);
@@ -809,22 +815,22 @@ function commitLayoutEffectOnFiber(
                 ) {
                   if (instance.props !== finishedWork.memoizedProps) {
                     console.error(
-                      'Expected %s props to match memoized props before ' +
-                      'componentDidMount. ' +
-                      'This might either be because of a bug in React, or because ' +
-                      'a component reassigns its own `this.props`. ' +
-                      'Please file an issue.',
-                      getComponentNameFromFiber(finishedWork) || 'instance',
+                      "Expected %s props to match memoized props before " +
+                        "componentDidMount. " +
+                        "This might either be because of a bug in React, or because " +
+                        "a component reassigns its own `this.props`. " +
+                        "Please file an issue.",
+                      getComponentNameFromFiber(finishedWork) || "instance"
                     );
                   }
                   if (instance.state !== finishedWork.memoizedState) {
                     console.error(
-                      'Expected %s state to match memoized state before ' +
-                      'componentDidMount. ' +
-                      'This might either be because of a bug in React, or because ' +
-                      'a component reassigns its own `this.state`. ' +
-                      'Please file an issue.',
-                      getComponentNameFromFiber(finishedWork) || 'instance',
+                      "Expected %s state to match memoized state before " +
+                        "componentDidMount. " +
+                        "This might either be because of a bug in React, or because " +
+                        "a component reassigns its own `this.state`. " +
+                        "Please file an issue.",
+                      getComponentNameFromFiber(finishedWork) || "instance"
                     );
                   }
                 }
@@ -848,9 +854,9 @@ function commitLayoutEffectOnFiber(
                 finishedWork.elementType === finishedWork.type
                   ? current.memoizedProps
                   : resolveDefaultProps(
-                    finishedWork.type,
-                    current.memoizedProps,
-                  );
+                      finishedWork.type,
+                      current.memoizedProps
+                    );
               const prevState = current.memoizedState;
               // We could update instance props and state here,
               // but instead we rely on them being set during last render.
@@ -862,22 +868,22 @@ function commitLayoutEffectOnFiber(
                 ) {
                   if (instance.props !== finishedWork.memoizedProps) {
                     console.error(
-                      'Expected %s props to match memoized props before ' +
-                      'componentDidUpdate. ' +
-                      'This might either be because of a bug in React, or because ' +
-                      'a component reassigns its own `this.props`. ' +
-                      'Please file an issue.',
-                      getComponentNameFromFiber(finishedWork) || 'instance',
+                      "Expected %s props to match memoized props before " +
+                        "componentDidUpdate. " +
+                        "This might either be because of a bug in React, or because " +
+                        "a component reassigns its own `this.props`. " +
+                        "Please file an issue.",
+                      getComponentNameFromFiber(finishedWork) || "instance"
                     );
                   }
                   if (instance.state !== finishedWork.memoizedState) {
                     console.error(
-                      'Expected %s state to match memoized state before ' +
-                      'componentDidUpdate. ' +
-                      'This might either be because of a bug in React, or because ' +
-                      'a component reassigns its own `this.state`. ' +
-                      'Please file an issue.',
-                      getComponentNameFromFiber(finishedWork) || 'instance',
+                      "Expected %s state to match memoized state before " +
+                        "componentDidUpdate. " +
+                        "This might either be because of a bug in React, or because " +
+                        "a component reassigns its own `this.state`. " +
+                        "Please file an issue.",
+                      getComponentNameFromFiber(finishedWork) || "instance"
                     );
                   }
                 }
@@ -892,7 +898,7 @@ function commitLayoutEffectOnFiber(
                   instance.componentDidUpdate(
                     prevProps,
                     prevState,
-                    instance.__reactInternalSnapshotBeforeUpdate,
+                    instance.__reactInternalSnapshotBeforeUpdate
                   );
                 } finally {
                   recordLayoutEffectDuration(finishedWork);
@@ -901,7 +907,7 @@ function commitLayoutEffectOnFiber(
                 instance.componentDidUpdate(
                   prevProps,
                   prevState,
-                  instance.__reactInternalSnapshotBeforeUpdate,
+                  instance.__reactInternalSnapshotBeforeUpdate
                 );
               }
             }
@@ -910,9 +916,8 @@ function commitLayoutEffectOnFiber(
 
         // TODO: I think this is now always non-null by the time it reaches the
         // commit phase. Consider removing the type check.
-        const updateQueue: UpdateQueue<
-          *,
-        > | null = (finishedWork.updateQueue: any);
+        const updateQueue: UpdateQueue<*> | null =
+          (finishedWork.updateQueue: any);
         if (updateQueue !== null) {
           if (__DEV__) {
             if (
@@ -921,22 +926,22 @@ function commitLayoutEffectOnFiber(
             ) {
               if (instance.props !== finishedWork.memoizedProps) {
                 console.error(
-                  'Expected %s props to match memoized props before ' +
-                  'processing the update queue. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.props`. ' +
-                  'Please file an issue.',
-                  getComponentNameFromFiber(finishedWork) || 'instance',
+                  "Expected %s props to match memoized props before " +
+                    "processing the update queue. " +
+                    "This might either be because of a bug in React, or because " +
+                    "a component reassigns its own `this.props`. " +
+                    "Please file an issue.",
+                  getComponentNameFromFiber(finishedWork) || "instance"
                 );
               }
               if (instance.state !== finishedWork.memoizedState) {
                 console.error(
-                  'Expected %s state to match memoized state before ' +
-                  'processing the update queue. ' +
-                  'This might either be because of a bug in React, or because ' +
-                  'a component reassigns its own `this.state`. ' +
-                  'Please file an issue.',
-                  getComponentNameFromFiber(finishedWork) || 'instance',
+                  "Expected %s state to match memoized state before " +
+                    "processing the update queue. " +
+                    "This might either be because of a bug in React, or because " +
+                    "a component reassigns its own `this.state`. " +
+                    "Please file an issue.",
+                  getComponentNameFromFiber(finishedWork) || "instance"
                 );
               }
             }
@@ -951,9 +956,8 @@ function commitLayoutEffectOnFiber(
       case HostRoot: {
         // TODO: I think this is now always non-null by the time it reaches the
         // commit phase. Consider removing the type check.
-        const updateQueue: UpdateQueue<
-          *,
-        > | null = (finishedWork.updateQueue: any);
+        const updateQueue: UpdateQueue<*> | null =
+          (finishedWork.updateQueue: any);
         if (updateQueue !== null) {
           let instance = null;
           if (finishedWork.child !== null) {
@@ -1000,31 +1004,31 @@ function commitLayoutEffectOnFiber(
 
           const commitTime = getCommitTime();
 
-          let phase = current === null ? 'mount' : 'update';
+          let phase = current === null ? "mount" : "update";
           if (enableProfilerNestedUpdatePhase) {
             if (isCurrentUpdateNested()) {
-              phase = 'nested-update';
+              phase = "nested-update";
             }
           }
 
-          if (typeof onRender === 'function') {
+          if (typeof onRender === "function") {
             onRender(
               finishedWork.memoizedProps.id,
               phase,
               finishedWork.actualDuration,
               finishedWork.treeBaseDuration,
               finishedWork.actualStartTime,
-              commitTime,
+              commitTime
             );
           }
 
           if (enableProfilerCommitHooks) {
-            if (typeof onCommit === 'function') {
+            if (typeof onCommit === "function") {
               onCommit(
                 finishedWork.memoizedProps.id,
                 phase,
                 effectDuration,
-                commitTime,
+                commitTime
               );
             }
 
@@ -1068,8 +1072,8 @@ function commitLayoutEffectOnFiber(
 
       default:
         throw new Error(
-          'This unit of work tag should not have side-effects. This error is ' +
-          'likely caused by a bug in React. Please file an issue.',
+          "This unit of work tag should not have side-effects. This error is " +
+            "likely caused by a bug in React. Please file an issue."
         );
     }
   }
@@ -1114,7 +1118,7 @@ function reappearLayoutEffectsOnFiber(node: Fiber) {
     }
     case ClassComponent: {
       const instance = node.stateNode;
-      if (typeof instance.componentDidMount === 'function') {
+      if (typeof instance.componentDidMount === "function") {
         safelyCallComponentDidMount(node, node.return, instance);
       }
       safelyAttachRef(node, node.return);
@@ -1129,7 +1133,7 @@ function reappearLayoutEffectsOnFiber(node: Fiber) {
 
 function commitTransitionProgress(
   finishedRoot: FiberRoot,
-  offscreenFiber: Fiber,
+  offscreenFiber: Fiber
 ) {
   if (enableTransitionTracing) {
     // This function adds suspense boundaries to the root
@@ -1190,7 +1194,7 @@ function commitTransitionProgress(
             rootPendingBoundaries.delete(offscreenInstance);
 
             if (rootPendingBoundaries.size === 0 && rootTransitions !== null) {
-              rootTransitions.forEach(transition => {
+              rootTransitions.forEach((transition) => {
                 addTransitionCompleteCallbackToPendingTransition({
                   transitionName: transition.name,
                   startTime: transition.startTime,
@@ -1250,7 +1254,7 @@ function hideOrUnhideAllChildren(finishedWork, isHidden) {
         (node.tag === OffscreenComponent ||
           node.tag === LegacyHiddenComponent) &&
         (node.memoizedState: OffscreenState) !== null &&
-          node !== finishedWork
+        node !== finishedWork
       ) {
         // Found a nested Offscreen component that is hidden.
         // Don't search any deeper. This tree should remain hidden.
@@ -1301,7 +1305,7 @@ function commitAttachRef(finishedWork: Fiber) {
     if (enableScopeAPI && finishedWork.tag === ScopeComponent) {
       instanceToUse = instance;
     }
-    if (typeof ref === 'function') {
+    if (typeof ref === "function") {
       let retVal;
       if (
         enableProfilerTimer &&
@@ -1318,21 +1322,21 @@ function commitAttachRef(finishedWork: Fiber) {
         retVal = ref(instanceToUse);
       }
       if (__DEV__) {
-        if (typeof retVal === 'function') {
+        if (typeof retVal === "function") {
           console.error(
-            'Unexpected return value from a callback ref in %s. ' +
-            'A callback ref should not return a function.',
-            getComponentNameFromFiber(finishedWork),
+            "Unexpected return value from a callback ref in %s. " +
+              "A callback ref should not return a function.",
+            getComponentNameFromFiber(finishedWork)
           );
         }
       }
     } else {
       if (__DEV__) {
-        if (!ref.hasOwnProperty('current')) {
+        if (!ref.hasOwnProperty("current")) {
           console.error(
-            'Unexpected ref object provided for %s. ' +
-            'Use either a ref-setter function or React.createRef().',
-            getComponentNameFromFiber(finishedWork),
+            "Unexpected ref object provided for %s. " +
+              "Use either a ref-setter function or React.createRef().",
+            getComponentNameFromFiber(finishedWork)
           );
         }
       }
@@ -1345,7 +1349,7 @@ function commitAttachRef(finishedWork: Fiber) {
 function commitDetachRef(current: Fiber) {
   const currentRef = current.ref;
   if (currentRef !== null) {
-    if (typeof currentRef === 'function') {
+    if (typeof currentRef === "function") {
       if (
         enableProfilerTimer &&
         enableProfilerCommitHooks &&
@@ -1476,10 +1480,10 @@ function emptyPortalContainer(current: Fiber) {
     containerInfo: Container,
     pendingChildren: ChildSet,
     ...
-} = current.stateNode;
-const { containerInfo } = portal;
-const emptyChildSet = createContainerChildSet(containerInfo);
-replaceContainerChildren(containerInfo, emptyChildSet);
+  } = current.stateNode;
+  const { containerInfo } = portal;
+  const emptyChildSet = createContainerChildSet(containerInfo);
+  replaceContainerChildren(containerInfo, emptyChildSet);
 }
 
 function getHostParentFiber(fiber: Fiber): Fiber {
@@ -1492,8 +1496,8 @@ function getHostParentFiber(fiber: Fiber): Fiber {
   }
 
   throw new Error(
-    'Expected to find a host parent. This error is likely caused by a bug ' +
-    'in React. Please file an issue.',
+    "Expected to find a host parent. This error is likely caused by a bug " +
+      "in React. Please file an issue."
   );
 }
 
@@ -1595,8 +1599,8 @@ function commitPlacement(finishedWork: Fiber): void {
     default:
       // 如果遇到不支持的父级 fiber 类型，则抛出错误。
       throw new Error(
-        'Invalid host parent fiber. This error is likely caused by a bug ' +
-        'in React. Please file an issue.',
+        "Invalid host parent fiber. This error is likely caused by a bug " +
+          "in React. Please file an issue."
       );
   }
 }
@@ -1604,7 +1608,7 @@ function commitPlacement(finishedWork: Fiber): void {
 function insertOrAppendPlacementNodeIntoContainer(
   node: Fiber,
   before: ?Instance,
-  parent: Container,
+  parent: Container
 ): void {
   const { tag } = node;
   const isHost = tag === HostComponent || tag === HostText;
@@ -1635,31 +1639,37 @@ function insertOrAppendPlacementNodeIntoContainer(
 function insertOrAppendPlacementNode(
   node: Fiber,
   before: ?Instance,
-  parent: Instance,
+  parent: Instance
 ): void {
   console.log("insertOrAppendPlacementNode", node, before, parent);
 
-  const { tag } = node;  // 获取节点的标签类型
-  const isHost = tag === HostComponent || tag === HostText;  // 判断节点是否是主机组件或主机文本
+  const { tag } = node; // 获取节点的标签类型
+  const isHost = tag === HostComponent || tag === HostText; // 判断节点是否是主机组件或主机文本
 
-  if (isHost) {  // 如果是主机组件或主机文本
-    const stateNode = node.stateNode;  // 获取节点的实际 DOM 元素或文本节点
-    if (before) {  // 如果有一个 `before` 节点
-      insertBefore(parent, stateNode, before);  // 将当前节点插入到 `before` 节点之前
+  if (isHost) {
+    // 如果是主机组件或主机文本
+    const stateNode = node.stateNode; // 获取节点的实际 DOM 元素或文本节点
+    if (before) {
+      // 如果有一个 `before` 节点
+      insertBefore(parent, stateNode, before); // 将当前节点插入到 `before` 节点之前
     } else {
-      appendChild(parent, stateNode);  // 否则将当前节点追加到父节点的末尾
+      appendChild(parent, stateNode); // 否则将当前节点追加到父节点的末尾
     }
-  } else if (tag === HostPortal) {  // 如果是门户节点
+  } else if (tag === HostPortal) {
+    // 如果是门户节点
     // 如果插入的节点是一个门户节点，则不需要遍历其子节点
     // 因为我们会直接从门户的每个子节点获取插入操作
-  } else {  // 如果是其他类型的节点
-    const child = node.child;  // 获取当前节点的第一个子节点
-    if (child !== null) {  // 如果有子节点
-      insertOrAppendPlacementNode(child, before, parent);  // 递归处理第一个子节点
-      let sibling = child.sibling;  // 获取第一个子节点的下一个兄弟节点
-      while (sibling !== null) {  // 遍历所有兄弟节点
-        insertOrAppendPlacementNode(sibling, before, parent);  // 递归处理每一个兄弟节点
-        sibling = sibling.sibling;  // 获取下一个兄弟节点
+  } else {
+    // 如果是其他类型的节点
+    const child = node.child; // 获取当前节点的第一个子节点
+    if (child !== null) {
+      // 如果有子节点
+      insertOrAppendPlacementNode(child, before, parent); // 递归处理第一个子节点
+      let sibling = child.sibling; // 获取第一个子节点的下一个兄弟节点
+      while (sibling !== null) {
+        // 遍历所有兄弟节点
+        insertOrAppendPlacementNode(sibling, before, parent); // 递归处理每一个兄弟节点
+        sibling = sibling.sibling; // 获取下一个兄弟节点
       }
     }
   }
@@ -1675,7 +1685,7 @@ let hostParentIsContainer: boolean = false;
 function commitDeletionEffects(
   root: FiberRoot,
   returnFiber: Fiber,
-  deletedFiber: Fiber,
+  deletedFiber: Fiber
 ) {
   if (supportsMutation) {
     // We only have the top Fiber that was deleted but we need to recurse down its
@@ -1719,8 +1729,8 @@ function commitDeletionEffects(
     }
     if (hostParent === null) {
       throw new Error(
-        'Expected to find a host parent. This error is likely caused by ' +
-        'a bug in React. Please file an issue.',
+        "Expected to find a host parent. This error is likely caused by " +
+          "a bug in React. Please file an issue."
       );
     }
     commitDeletionEffectsOnFiber(root, returnFiber, deletedFiber);
@@ -1737,7 +1747,7 @@ function commitDeletionEffects(
 function recursivelyTraverseDeletionEffects(
   finishedRoot,
   nearestMountedAncestor,
-  parent,
+  parent
 ) {
   // TODO: Use a static flag to skip trees that don't have unmount effects
   let child = parent.child;
@@ -1750,7 +1760,7 @@ function recursivelyTraverseDeletionEffects(
 function commitDeletionEffectsOnFiber(
   finishedRoot: FiberRoot,
   nearestMountedAncestor: Fiber,
-  deletedFiber: Fiber,
+  deletedFiber: Fiber
 ) {
   onCommitUnmount(deletedFiber);
 
@@ -1776,7 +1786,7 @@ function commitDeletionEffectsOnFiber(
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
         hostParent = prevHostParent;
         hostParentIsContainer = prevHostParentIsContainer;
@@ -1787,12 +1797,12 @@ function commitDeletionEffectsOnFiber(
           if (hostParentIsContainer) {
             removeChildFromContainer(
               ((hostParent: any): Container),
-              (deletedFiber.stateNode: Instance | TextInstance),
+              (deletedFiber.stateNode: Instance | TextInstance)
             );
           } else {
             removeChild(
               ((hostParent: any): Instance),
-              (deletedFiber.stateNode: Instance | TextInstance),
+              (deletedFiber.stateNode: Instance | TextInstance)
             );
           }
         }
@@ -1800,7 +1810,7 @@ function commitDeletionEffectsOnFiber(
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
       }
       return;
@@ -1824,12 +1834,12 @@ function commitDeletionEffectsOnFiber(
           if (hostParentIsContainer) {
             clearSuspenseBoundaryFromContainer(
               ((hostParent: any): Container),
-              (deletedFiber.stateNode: SuspenseInstance),
+              (deletedFiber.stateNode: SuspenseInstance)
             );
           } else {
             clearSuspenseBoundary(
               ((hostParent: any): Instance),
-              (deletedFiber.stateNode: SuspenseInstance),
+              (deletedFiber.stateNode: SuspenseInstance)
             );
           }
         }
@@ -1846,7 +1856,7 @@ function commitDeletionEffectsOnFiber(
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
         hostParent = prevHostParent;
         hostParentIsContainer = prevHostParentIsContainer;
@@ -1856,7 +1866,7 @@ function commitDeletionEffectsOnFiber(
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
       }
       return;
@@ -1866,7 +1876,8 @@ function commitDeletionEffectsOnFiber(
     case MemoComponent:
     case SimpleMemoComponent: {
       if (!offscreenSubtreeWasHidden) {
-        const updateQueue: FunctionComponentUpdateQueue | null = (deletedFiber.updateQueue: any);
+        const updateQueue: FunctionComponentUpdateQueue | null =
+          (deletedFiber.updateQueue: any);
         if (updateQueue !== null) {
           const lastEffect = updateQueue.lastEffect;
           if (lastEffect !== null) {
@@ -1880,7 +1891,7 @@ function commitDeletionEffectsOnFiber(
                   safelyCallDestroy(
                     deletedFiber,
                     nearestMountedAncestor,
-                    destroy,
+                    destroy
                   );
                 } else if ((tag & HookLayout) !== NoHookEffect) {
                   if (enableSchedulingProfiler) {
@@ -1896,14 +1907,14 @@ function commitDeletionEffectsOnFiber(
                     safelyCallDestroy(
                       deletedFiber,
                       nearestMountedAncestor,
-                      destroy,
+                      destroy
                     );
                     recordLayoutEffectDuration(deletedFiber);
                   } else {
                     safelyCallDestroy(
                       deletedFiber,
                       nearestMountedAncestor,
-                      destroy,
+                      destroy
                     );
                   }
 
@@ -1921,7 +1932,7 @@ function commitDeletionEffectsOnFiber(
       recursivelyTraverseDeletionEffects(
         finishedRoot,
         nearestMountedAncestor,
-        deletedFiber,
+        deletedFiber
       );
       return;
     }
@@ -1929,18 +1940,18 @@ function commitDeletionEffectsOnFiber(
       if (!offscreenSubtreeWasHidden) {
         safelyDetachRef(deletedFiber, nearestMountedAncestor);
         const instance = deletedFiber.stateNode;
-        if (typeof instance.componentWillUnmount === 'function') {
+        if (typeof instance.componentWillUnmount === "function") {
           safelyCallComponentWillUnmount(
             deletedFiber,
             nearestMountedAncestor,
-            instance,
+            instance
           );
         }
       }
       recursivelyTraverseDeletionEffects(
         finishedRoot,
         nearestMountedAncestor,
-        deletedFiber,
+        deletedFiber
       );
       return;
     }
@@ -1951,7 +1962,7 @@ function commitDeletionEffectsOnFiber(
       recursivelyTraverseDeletionEffects(
         finishedRoot,
         nearestMountedAncestor,
-        deletedFiber,
+        deletedFiber
       );
       return;
     }
@@ -1976,14 +1987,14 @@ function commitDeletionEffectsOnFiber(
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
         offscreenSubtreeWasHidden = prevOffscreenSubtreeWasHidden;
       } else {
         recursivelyTraverseDeletionEffects(
           finishedRoot,
           nearestMountedAncestor,
-          deletedFiber,
+          deletedFiber
         );
       }
       break;
@@ -1992,7 +2003,7 @@ function commitDeletionEffectsOnFiber(
       recursivelyTraverseDeletionEffects(
         finishedRoot,
         nearestMountedAncestor,
-        deletedFiber,
+        deletedFiber
       );
       return;
     }
@@ -2003,14 +2014,14 @@ function commitSuspenseCallback(finishedWork: Fiber) {
   const newState: SuspenseState | null = finishedWork.memoizedState;
   if (enableSuspenseCallback && newState !== null) {
     const suspenseCallback = finishedWork.memoizedProps.suspenseCallback;
-    if (typeof suspenseCallback === 'function') {
+    if (typeof suspenseCallback === "function") {
       const wakeables: Set<Wakeable> | null = (finishedWork.updateQueue: any);
       if (wakeables !== null) {
         suspenseCallback(new Set(wakeables));
       }
     } else if (__DEV__) {
       if (suspenseCallback !== undefined) {
-        console.error('Unexpected type for suspenseCallback.');
+        console.error("Unexpected type for suspenseCallback.");
       }
     }
   }
@@ -2018,7 +2029,7 @@ function commitSuspenseCallback(finishedWork: Fiber) {
 
 function commitSuspenseHydrationCallbacks(
   finishedRoot: FiberRoot,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ) {
   if (!supportsHydration) {
     return;
@@ -2058,7 +2069,7 @@ function attachSuspenseRetryListeners(finishedWork: Fiber) {
     if (retryCache === null) {
       retryCache = finishedWork.stateNode = new PossiblyWeakSet();
     }
-    wakeables.forEach(wakeable => {
+    wakeables.forEach((wakeable) => {
       // Memoize using the boundary fiber to prevent redundant listeners.
       const retry = resolveRetryWakeable.bind(null, finishedWork, wakeable);
       if (!retryCache.has(wakeable)) {
@@ -2071,7 +2082,7 @@ function attachSuspenseRetryListeners(finishedWork: Fiber) {
               restorePendingUpdaters(inProgressRoot, inProgressLanes);
             } else {
               throw Error(
-                'Expected finished root and lanes to be set. This is a bug in React.',
+                "Expected finished root and lanes to be set. This is a bug in React."
               );
             }
           }
@@ -2088,7 +2099,7 @@ function attachSuspenseRetryListeners(finishedWork: Fiber) {
 // TODO: Use an effect tag.
 export function isSuspenseBoundaryBeingHidden(
   current: Fiber | null,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ): boolean {
   if (current !== null) {
     const oldState: SuspenseState | null = current.memoizedState;
@@ -2103,7 +2114,7 @@ export function isSuspenseBoundaryBeingHidden(
 export function commitMutationEffects(
   root: FiberRoot,
   finishedWork: Fiber,
-  committedLanes: Lanes,
+  committedLanes: Lanes
 ) {
   inProgressLanes = committedLanes;
   inProgressRoot = root;
@@ -2119,7 +2130,7 @@ export function commitMutationEffects(
 function recursivelyTraverseMutationEffects(
   root: FiberRoot,
   parentFiber: Fiber,
-  lanes: Lanes,
+  lanes: Lanes
 ) {
   // Deletions effects can be scheduled on any fiber type. They need to happen
   // before the children effects hae fired.
@@ -2150,11 +2161,13 @@ function recursivelyTraverseMutationEffects(
 
 function commitMutationEffectsOnFiber(
   finishedWork: Fiber, // 已完成的 fiber 节点
-  root: FiberRoot,     // 根 fiber 节点
-  lanes: Lanes,        // 用于调度更新的优先级信息
+  root: FiberRoot, // 根 fiber 节点
+  lanes: Lanes // 用于调度更新的优先级信息
 ) {
+  console.log("commitMutationEffectsOnFiber...");
+
   const current = finishedWork.alternate; // 当前 fiber 对应的前一个 fiber 节点（旧的 fiber）
-  const flags = finishedWork.flags;       // 这个 fiber 节点上标记的副作用标志
+  const flags = finishedWork.flags; // 这个 fiber 节点上标记的副作用标志
 
   // 根据不同的 fiber 类型，处理提交阶段的副作用
   switch (finishedWork.tag) {
@@ -2175,12 +2188,12 @@ function commitMutationEffectsOnFiber(
           commitHookEffectListUnmount(
             HookInsertion | HookHasEffect,
             finishedWork,
-            finishedWork.return,
+            finishedWork.return
           );
           // 在提交后挂载新的副作用钩子函数
           commitHookEffectListMount(
             HookInsertion | HookHasEffect,
-            finishedWork,
+            finishedWork
           );
         } catch (error) {
           // 捕获提交阶段的错误
@@ -2198,7 +2211,7 @@ function commitMutationEffectsOnFiber(
             commitHookEffectListUnmount(
               HookLayout | HookHasEffect,
               finishedWork,
-              finishedWork.return,
+              finishedWork.return
             );
           } catch (error) {
             captureCommitPhaseError(finishedWork, finishedWork.return, error);
@@ -2209,7 +2222,7 @@ function commitMutationEffectsOnFiber(
             commitHookEffectListUnmount(
               HookLayout | HookHasEffect,
               finishedWork,
-              finishedWork.return,
+              finishedWork.return
             );
           } catch (error) {
             captureCommitPhaseError(finishedWork, finishedWork.return, error);
@@ -2265,7 +2278,8 @@ function commitMutationEffectsOnFiber(
             const oldProps =
               current !== null ? current.memoizedProps : newProps;
             const type = finishedWork.type;
-            const updatePayload: null | UpdatePayload = (finishedWork.updateQueue: any);
+            const updatePayload: null | UpdatePayload =
+              (finishedWork.updateQueue: any);
             finishedWork.updateQueue = null;
             if (updatePayload !== null) {
               try {
@@ -2275,13 +2289,13 @@ function commitMutationEffectsOnFiber(
                   type,
                   oldProps,
                   newProps,
-                  finishedWork,
+                  finishedWork
                 );
               } catch (error) {
                 captureCommitPhaseError(
                   finishedWork,
                   finishedWork.return,
-                  error,
+                  error
                 );
               }
             }
@@ -2301,8 +2315,8 @@ function commitMutationEffectsOnFiber(
         if (supportsMutation) {
           if (finishedWork.stateNode === null) {
             throw new Error(
-              'This should have a text node initialized. This error is likely ' +
-              'caused by a bug in React. Please file an issue.',
+              "This should have a text node initialized. This error is likely " +
+                "caused by a bug in React. Please file an issue."
             );
           }
 
@@ -2337,7 +2351,7 @@ function commitMutationEffectsOnFiber(
                 captureCommitPhaseError(
                   finishedWork,
                   finishedWork.return,
-                  error,
+                  error
                 );
               }
             }
@@ -2490,7 +2504,7 @@ function commitReconciliationEffects(finishedWork: Fiber) {
 export function commitLayoutEffects(
   finishedWork: Fiber,
   root: FiberRoot,
-  committedLanes: Lanes,
+  committedLanes: Lanes
 ): void {
   inProgressLanes = committedLanes;
   inProgressRoot = root;
@@ -2505,7 +2519,7 @@ export function commitLayoutEffects(
 function commitLayoutEffects_begin(
   subtreeRoot: Fiber,
   root: FiberRoot,
-  committedLanes: Lanes,
+  committedLanes: Lanes
 ) {
   // Suspense layout effects semantics don't change for legacy roots.
   const isModernRoot = (subtreeRoot.mode & ConcurrentMode) !== NoMode;
@@ -2552,7 +2566,7 @@ function commitLayoutEffects_begin(
           commitLayoutEffects_begin(
             child, // New root; bubble back up to here and stop.
             root,
-            committedLanes,
+            committedLanes
           );
           child = child.sibling;
         }
@@ -2579,7 +2593,7 @@ function commitLayoutEffects_begin(
 function commitLayoutMountEffects_complete(
   subtreeRoot: Fiber,
   root: FiberRoot,
-  committedLanes: Lanes,
+  committedLanes: Lanes
 ) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
@@ -2642,7 +2656,7 @@ function disappearLayoutEffects_begin(subtreeRoot: Fiber) {
         safelyDetachRef(fiber, fiber.return);
 
         const instance = fiber.stateNode;
-        if (typeof instance.componentWillUnmount === 'function') {
+        if (typeof instance.componentWillUnmount === "function") {
           safelyCallComponentWillUnmount(fiber, fiber.return, instance);
         }
         break;
@@ -2755,14 +2769,14 @@ export function commitPassiveMountEffects(
   root: FiberRoot,
   finishedWork: Fiber,
   committedLanes: Lanes,
-  committedTransitions: Array<Transition> | null,
+  committedTransitions: Array<Transition> | null
 ): void {
   nextEffect = finishedWork;
   commitPassiveMountEffects_begin(
     finishedWork,
     root,
     committedLanes,
-    committedTransitions,
+    committedTransitions
   );
 }
 
@@ -2770,7 +2784,7 @@ function commitPassiveMountEffects_begin(
   subtreeRoot: Fiber,
   root: FiberRoot,
   committedLanes: Lanes,
-  committedTransitions: Array<Transition> | null,
+  committedTransitions: Array<Transition> | null
 ) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
@@ -2783,7 +2797,7 @@ function commitPassiveMountEffects_begin(
         subtreeRoot,
         root,
         committedLanes,
-        committedTransitions,
+        committedTransitions
       );
     }
   }
@@ -2793,7 +2807,7 @@ function commitPassiveMountEffects_complete(
   subtreeRoot: Fiber,
   root: FiberRoot,
   committedLanes: Lanes,
-  committedTransitions: Array<Transition> | null,
+  committedTransitions: Array<Transition> | null
 ) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
@@ -2805,7 +2819,7 @@ function commitPassiveMountEffects_complete(
           root,
           fiber,
           committedLanes,
-          committedTransitions,
+          committedTransitions
         );
       } catch (error) {
         captureCommitPhaseError(fiber, fiber.return, error);
@@ -2833,7 +2847,7 @@ function commitPassiveMountOnFiber(
   finishedRoot: FiberRoot,
   finishedWork: Fiber,
   committedLanes: Lanes,
-  committedTransitions: Array<Transition> | null,
+  committedTransitions: Array<Transition> | null
 ): void {
   switch (finishedWork.tag) {
     case FunctionComponent:
@@ -2890,7 +2904,7 @@ function commitPassiveMountOnFiber(
 
         // Initial render
         if (committedTransitions !== null) {
-          committedTransitions.forEach(transition => {
+          committedTransitions.forEach((transition) => {
             addTransitionStartCallbackToPendingTransition({
               transitionName: transition.name,
               startTime: transition.startTime,
@@ -2902,7 +2916,7 @@ function commitPassiveMountOnFiber(
             pendingSuspenseBoundaries === null ||
             pendingSuspenseBoundaries.size === 0
           ) {
-            pendingTransitions.forEach(transition => {
+            pendingTransitions.forEach((transition) => {
               addTransitionCompleteCallbackToPendingTransition({
                 transitionName: transition.name,
                 startTime: transition.startTime,
@@ -2980,10 +2994,11 @@ function commitPassiveMountOnFiber(
                 // We only have one instance of the transitions set
                 // because we update it only during the commit phase. We
                 // will create the set on a as needed basis in the commit phase
-                finishedWork.memoizedState.transitions = prevTransitions = new Set();
+                finishedWork.memoizedState.transitions = prevTransitions =
+                  new Set();
               }
 
-              transitions.forEach(transition => {
+              transitions.forEach((transition) => {
                 prevTransitions.add(transition);
               });
             }
@@ -3039,7 +3054,7 @@ function commitPassiveUnmountEffects_begin() {
           nextEffect = fiberToDelete;
           commitPassiveUnmountEffectsInsideOfDeletedTree_begin(
             fiberToDelete,
-            fiber,
+            fiber
           );
         }
 
@@ -3116,14 +3131,14 @@ function commitPassiveUnmountOnFiber(finishedWork: Fiber): void {
         commitHookEffectListUnmount(
           HookPassive | HookHasEffect,
           finishedWork,
-          finishedWork.return,
+          finishedWork.return
         );
         recordPassiveEffectDuration(finishedWork);
       } else {
         commitHookEffectListUnmount(
           HookPassive | HookHasEffect,
           finishedWork,
-          finishedWork.return,
+          finishedWork.return
         );
       }
       break;
@@ -3133,7 +3148,7 @@ function commitPassiveUnmountOnFiber(finishedWork: Fiber): void {
 
 function commitPassiveUnmountEffectsInsideOfDeletedTree_begin(
   deletedSubtreeRoot: Fiber,
-  nearestMountedAncestor: Fiber | null,
+  nearestMountedAncestor: Fiber | null
 ) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
@@ -3152,14 +3167,14 @@ function commitPassiveUnmountEffectsInsideOfDeletedTree_begin(
       nextEffect = child;
     } else {
       commitPassiveUnmountEffectsInsideOfDeletedTree_complete(
-        deletedSubtreeRoot,
+        deletedSubtreeRoot
       );
     }
   }
 }
 
 function commitPassiveUnmountEffectsInsideOfDeletedTree_complete(
-  deletedSubtreeRoot: Fiber,
+  deletedSubtreeRoot: Fiber
 ) {
   while (nextEffect !== null) {
     const fiber = nextEffect;
@@ -3197,7 +3212,7 @@ function commitPassiveUnmountEffectsInsideOfDeletedTree_complete(
 
 function commitPassiveUnmountInsideDeletedTreeOnFiber(
   current: Fiber,
-  nearestMountedAncestor: Fiber | null,
+  nearestMountedAncestor: Fiber | null
 ): void {
   switch (current.tag) {
     case FunctionComponent:
@@ -3212,14 +3227,14 @@ function commitPassiveUnmountInsideDeletedTreeOnFiber(
         commitHookEffectListUnmount(
           HookPassive,
           current,
-          nearestMountedAncestor,
+          nearestMountedAncestor
         );
         recordPassiveEffectDuration(current);
       } else {
         commitHookEffectListUnmount(
           HookPassive,
           current,
-          nearestMountedAncestor,
+          nearestMountedAncestor
         );
       }
       break;
@@ -3324,7 +3339,7 @@ function invokeLayoutEffectUnmountInDEV(fiber: Fiber): void {
           commitHookEffectListUnmount(
             HookLayout | HookHasEffect,
             fiber,
-            fiber.return,
+            fiber.return
           );
         } catch (error) {
           captureCommitPhaseError(fiber, fiber.return, error);
@@ -3333,7 +3348,7 @@ function invokeLayoutEffectUnmountInDEV(fiber: Fiber): void {
       }
       case ClassComponent: {
         const instance = fiber.stateNode;
-        if (typeof instance.componentWillUnmount === 'function') {
+        if (typeof instance.componentWillUnmount === "function") {
           safelyCallComponentWillUnmount(fiber, fiber.return, instance);
         }
         break;
@@ -3354,7 +3369,7 @@ function invokePassiveEffectUnmountInDEV(fiber: Fiber): void {
           commitHookEffectListUnmount(
             HookPassive | HookHasEffect,
             fiber,
-            fiber.return,
+            fiber.return
           );
         } catch (error) {
           captureCommitPhaseError(fiber, fiber.return, error);

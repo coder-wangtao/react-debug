@@ -1,4 +1,4 @@
-import { forwardRef } from "react"
+import { forwardRef } from "react";
 
 // 使用 forwardRef
 const InputComponent = forwardRef(({ value }, ref) => (
@@ -27,7 +27,7 @@ const InputComponent = forwardRef(({ value }, ref) => (
 // }
 
 export default () => {
-  const result = <InputComponent />
+  const result = <InputComponent />;
   console.log("result", result);
-  return null
-}
+  return null;
+};

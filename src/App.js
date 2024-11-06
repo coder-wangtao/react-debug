@@ -8,11 +8,14 @@ import StopEventComponent from "@/components/event/stopEventComponent";
 import SetStateApp from "@/components/setState";
 import SetStateAsyncApp from "@/components/setState/async";
 import SetStatePromiseApp from "@/components/setState/promise";
+import SetStateCounterApp from "@/components/setState/counter";
 
 import EmptyComponent from "@/components/EmptyComponent";
 
 import AutomaticApp from "@/components/batching/Automatic";
 import ConcurrentApp from "@/components/batching/Concurrent";
+
+import SetTimeoutApp from "@/components/setTimeout";
 
 // import TodoList from "@/components/todoList";
 // import TodoListNoKey from "@/components/todoList/NoKey";
@@ -26,16 +29,19 @@ function App() {
     <div id="app">
       {/* <RefApp /> */}
       {/* <RefApp /> */}
-      {/* <Counter /> */}
+      <Counter />
       {/* <UseEffectApp /> */}
       {/* <UseIdApp /> */}
       {/* <EmptyComponent /> */}
 
       {/* <EventApp /> */}
-      <StopEventComponent />
+      {/* <StopEventComponent /> */}
+
+      {/* <SetTimeoutApp /> */}
 
       {/* <PromiseApp /> */}
       {/* <AsyncApp /> */}
+      {/* <SetStateCounterApp /> */}
 
       {/* <AutomaticApp /> */}
       {/* <ConcurrentApp /> */}
