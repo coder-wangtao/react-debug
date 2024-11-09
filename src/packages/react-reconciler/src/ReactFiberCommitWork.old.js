@@ -2804,17 +2804,20 @@ function commitPassiveMountEffects_begin(
 }
 
 function commitPassiveMountEffects_complete(
-  subtreeRoot: Fiber,
-  root: FiberRoot,
-  committedLanes: Lanes,
-  committedTransitions: Array<Transition> | null
+  subtreeRoot: Fiber, // 子树的根节点
+  root: FiberRoot, // Fiber 树的根节点
+  committedLanes: Lanes, // 已提交的 lanes（表示此次更新影响的 fiber）
+  committedTransitions: Array<Transition> | null // 提交的过渡效果列表（若存在）
 ) {
+  // 循环遍历所有的 nextEffect
   while (nextEffect !== null) {
     const fiber = nextEffect;
 
+    // 检查当前 fiber 是否带有 Passive 标志
     if ((fiber.flags & Passive) !== NoFlags) {
-      setCurrentDebugFiberInDEV(fiber);
+      setCurrentDebugFiberInDEV(fiber); // 设置当前调试 Fiber（开发环境用）
       try {
+        // 执行带有 Passive 标志的副作用，调用副作用挂载方法
         commitPassiveMountOnFiber(
           root,
           fiber,
@@ -2822,23 +2825,27 @@ function commitPassiveMountEffects_complete(
           committedTransitions
         );
       } catch (error) {
+        // 捕获副作用执行期间的错误，并将其报告
         captureCommitPhaseError(fiber, fiber.return, error);
       }
-      resetCurrentDebugFiberInDEV();
+      resetCurrentDebugFiberInDEV(); // 重置当前调试 Fiber
     }
 
+    // 如果当前 fiber 是子树根节点，说明整个遍历已经完成
     if (fiber === subtreeRoot) {
-      nextEffect = null;
-      return;
+      nextEffect = null; // 清空 nextEffect
+      return; // 退出函数
     }
 
+    // 否则检查当前 fiber 是否有兄弟节点（sibling）
     const sibling = fiber.sibling;
     if (sibling !== null) {
-      sibling.return = fiber.return;
-      nextEffect = sibling;
-      return;
+      sibling.return = fiber.return; // 确保兄弟节点的 return 指向正确
+      nextEffect = sibling; // 更新 nextEffect 为兄弟节点
+      return; // 回到 while 循环的顶部，继续遍历兄弟节点
     }
 
+    // 若无兄弟节点，继续往上返回，设置 nextEffect 为父节点
     nextEffect = fiber.return;
   }
 }

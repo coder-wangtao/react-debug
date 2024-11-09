@@ -1,11 +1,20 @@
 import RefApp from "@/components/ref";
 import Counter from "@/components/counter";
-import UseEffectApp from "@/components/InfiniteLoop/useEffect";
+import InfiniteLoopUseEffectApp from "@/components/InfiniteLoop/useEffect";
 import UseIdApp from "@/components/useId";
 import EventApp from "@/components/event";
 import StopEventComponent from "@/components/event/stopEventComponent";
 
 import SetStateApp from "@/components/setState";
+
+import UseHookApp from "@/components/useHook";
+import UseHookHocApp from "@/components/useHookHoc";
+import UseHookRenderPropsApp from "@/components/useHookRenderProps";
+import UseRefApp from "@/components/useRef";
+import UseEffectApp from "@/components/useEffect";
+import UseReducerApp from "@/components/useReducer";
+import MemoApp from "@/components/memo";
+
 import SetStateAsyncApp from "@/components/setState/async";
 import SetStatePromiseApp from "@/components/setState/promise";
 import SetStateCounterApp from "@/components/setState/counter";
@@ -29,7 +38,7 @@ function App() {
     <div id="app">
       {/* <RefApp /> */}
       {/* <RefApp /> */}
-      <Counter />
+      {/* <Counter /> */}
       {/* <UseEffectApp /> */}
       {/* <UseIdApp /> */}
       {/* <EmptyComponent /> */}
@@ -52,6 +61,15 @@ function App() {
       {/* <TodoListReorderKey /> */}
 
       {/* <SetStateApp /> */}
+
+      {/* <UseHookApp /> */}
+      {/* <UseHookHocApp /> */}
+      {/* <UseHookRenderPropsApp /> */}
+      {/* <UseRefApp /> */}
+      {/* <UseEffectApp /> */}
+      {/* <UseReducerApp /> */}
+      <MemoApp />
+
       {/* <SetStateAsyncApp /> */}
       {/* <SetStatePromiseApp /> */}
     </div>

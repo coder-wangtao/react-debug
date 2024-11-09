@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 const App = () => {
   const ref = useRef(null);
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    console.log("useEffect...");
+  });
 
   // useEffect(() => {
   //   setInterval(() => { console.log(value) }, 1000)
@@ -10,18 +14,24 @@ const App = () => {
   // }, [])
 
   useEffect(() => {
-    ref.current = value
-  }, [value])
+    ref.current = value;
+  }, [value]);
 
-  useEffect(() => {
-    setInterval(() => { console.log(ref.current) }, 1000)
-  }, [])
+  // useEffect(() => {
+  //   setInterval(() => {
+  //     console.log(ref.current);
+  //   }, 1000);
+  // }, []);
 
-  function clickHandler() { setValue(value + 1) }
+  function clickHandler() {
+    setValue(value + 1);
+  }
 
-  return <div>
-    value: {value} <button onClick={clickHandler}>increase</button>
-  </div>
+  return (
+    <div>
+      value: {value} <button onClick={clickHandler}>increase</button>
+    </div>
+  );
 };
 
 export default App;
