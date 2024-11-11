@@ -863,6 +863,7 @@ function performConcurrentWorkOnRoot(root, didTimeout) {
     !includesBlockingLane(root, lanes) &&
     !includesExpiredLane(root, lanes) &&
     (disableSchedulerTimeoutInWorkLoop || !didTimeout);
+  console.log("shouldTimeSlice", shouldTimeSlice);
   let exitStatus = shouldTimeSlice
     ? renderRootConcurrent(root, lanes) // 如果支持时间切片，则使用并发模式渲染根节点
     : renderRootSync(root, lanes); // 否则，使用同步模式渲染根节点

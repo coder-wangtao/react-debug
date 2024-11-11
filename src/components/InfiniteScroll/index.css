@@ -1,0 +1,18 @@
+.container {
+  overflow: hidden;
+  position: relative;
+  width: 100%; /* 根据需要调整宽度 */
+}
+
+.content {
+  display: flex;
+}
+
+.item {
+  flex-shrink: 0;
+  background-color: lightcoral;
+  text-align: center;
+  line-height: 50px;
+  color: white;
+  padding: 10px;
+}

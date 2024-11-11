@@ -22,9 +22,13 @@ import SetStateCounterApp from "@/components/setState/counter";
 import EmptyComponent from "@/components/EmptyComponent";
 
 import AutomaticApp from "@/components/batching/Automatic";
-import ConcurrentApp from "@/components/batching/Concurrent";
+// import ConcurrentApp from "@/components/batching/Concurrent";
 
 import SetTimeoutApp from "@/components/setTimeout";
+import TailwindApp from "@/components/tailwind";
+
+import ConcurrentApp from "@/components/concurrent";
+import InfiniteScrollApp from "@/components/InfiniteScroll";
 
 // import TodoList from "@/components/todoList";
 // import TodoListNoKey from "@/components/todoList/NoKey";
@@ -33,9 +37,13 @@ import SetTimeoutApp from "@/components/setTimeout";
 // import TodoListNoKey from "@/components/render-list/NoKey";
 // import TodoListReorderKey from "@/components/render-list/ReorderKey";
 
+import CounterReduxApp from "@/components/counter-redux";
+
 function App() {
   return (
     <div id="app">
+      {/* <InfiniteScrollApp /> */}
+      {/* <ConcurrentApp /> */}
       {/* <RefApp /> */}
       {/* <RefApp /> */}
       {/* <Counter /> */}
@@ -68,10 +76,13 @@ function App() {
       {/* <UseRefApp /> */}
       {/* <UseEffectApp /> */}
       {/* <UseReducerApp /> */}
-      <MemoApp />
+      {/* <MemoApp /> */}
+      {/* <TailwindApp /> */}
 
       {/* <SetStateAsyncApp /> */}
       {/* <SetStatePromiseApp /> */}
+
+      <CounterReduxApp />
     </div>
   );
 }
