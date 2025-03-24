@@ -55,36 +55,36 @@ const SPACEBAR_CODE = 32;
 const SPACEBAR_CHAR = String.fromCharCode(SPACEBAR_CODE);
 
 function registerEvents() {
-  registerTwoPhaseEvent('onBeforeInput', [
-    'compositionend',
-    'keypress',
-    'textInput',
-    'paste',
-  ]);
-  registerTwoPhaseEvent('onCompositionEnd', [
-    'compositionend',
-    'focusout',
-    'keydown',
-    'keypress',
-    'keyup',
-    'mousedown',
-  ]);
-  registerTwoPhaseEvent('onCompositionStart', [
-    'compositionstart',
-    'focusout',
-    'keydown',
-    'keypress',
-    'keyup',
-    'mousedown',
-  ]);
-  registerTwoPhaseEvent('onCompositionUpdate', [
-    'compositionupdate',
-    'focusout',
-    'keydown',
-    'keypress',
-    'keyup',
-    'mousedown',
-  ]);
+  // registerTwoPhaseEvent('onBeforeInput', [
+  //   'compositionend',
+  //   'keypress',
+  //   'textInput',
+  //   'paste',
+  // ]);
+  // registerTwoPhaseEvent('onCompositionEnd', [
+  //   'compositionend',
+  //   'focusout',
+  //   'keydown',
+  //   'keypress',
+  //   'keyup',
+  //   'mousedown',
+  // ]);
+  // registerTwoPhaseEvent('onCompositionStart', [
+  //   'compositionstart',
+  //   'focusout',
+  //   'keydown',
+  //   'keypress',
+  //   'keyup',
+  //   'mousedown',
+  // ]);
+  // registerTwoPhaseEvent('onCompositionUpdate', [
+  //   'compositionupdate',
+  //   'focusout',
+  //   'keydown',
+  //   'keypress',
+  //   'keyup',
+  //   'mousedown',
+  // ]);
 }
 
 // Track whether we've ever handled a keypress on the space key.

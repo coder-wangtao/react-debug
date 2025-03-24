@@ -7,15 +7,16 @@
  * @flow
  */
 
-import type {DOMEventName} from './DOMEventNames';
+import type { DOMEventName } from "./DOMEventNames";
 
-import {enableCreateEventHandleAPI} from 'shared/ReactFeatureFlags';
+import { enableCreateEventHandleAPI } from "shared/ReactFeatureFlags";
 
+//// 所有原生事件名，比如 click，将来用来注册到 DOM 中
 export const allNativeEvents: Set<DOMEventName> = new Set();
 
 if (enableCreateEventHandleAPI) {
-  allNativeEvents.add('beforeblur');
-  allNativeEvents.add('afterblur');
+  allNativeEvents.add("beforeblur");
+  allNativeEvents.add("afterblur");
 }
 
 /**
@@ -33,37 +34,39 @@ export const possibleRegistrationNames = __DEV__ ? {} : (null: any);
 // Trust the developer to only use possibleRegistrationNames in __DEV__
 
 export function registerTwoPhaseEvent(
-  registrationName: string,
-  dependencies: Array<DOMEventName>,
+  registrationName: string, // onClick
+  dependencies: Array<DOMEventName> // ["click"]
 ): void {
+  // 冒泡
   registerDirectEvent(registrationName, dependencies);
-  registerDirectEvent(registrationName + 'Capture', dependencies);
+  // 捕获
+  registerDirectEvent(registrationName + "Capture", dependencies);
 }
 
 export function registerDirectEvent(
   registrationName: string,
-  dependencies: Array<DOMEventName>,
+  dependencies: Array<DOMEventName>
 ) {
-  if (__DEV__) {
-    if (registrationNameDependencies[registrationName]) {
-      console.error(
-        'EventRegistry: More than one plugin attempted to publish the same ' +
-          'registration name, `%s`.',
-        registrationName,
-      );
-    }
-  }
+  // if (__DEV__) {
+  //   if (registrationNameDependencies[registrationName]) {
+  //     console.error(
+  //       "EventRegistry: More than one plugin attempted to publish the same " +
+  //         "registration name, `%s`.",
+  //       registrationName
+  //     );
+  //   }
+  // }
 
   registrationNameDependencies[registrationName] = dependencies;
+  //onClick:['click']
+  // if (__DEV__) {
+  //   const lowerCasedName = registrationName.toLowerCase();
+  //   possibleRegistrationNames[lowerCasedName] = registrationName;
 
-  if (__DEV__) {
-    const lowerCasedName = registrationName.toLowerCase();
-    possibleRegistrationNames[lowerCasedName] = registrationName;
-
-    if (registrationName === 'onDoubleClick') {
-      possibleRegistrationNames.ondblclick = registrationName;
-    }
-  }
+  //   if (registrationName === "onDoubleClick") {
+  //     possibleRegistrationNames.ondblclick = registrationName;
+  //   }
+  // }
 
   for (let i = 0; i < dependencies.length; i++) {
     allNativeEvents.add(dependencies[i]);

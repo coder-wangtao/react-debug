@@ -7,30 +7,30 @@
  * @flow
  */
 
-import type {AnyNativeEvent} from '../PluginModuleType';
-import type {DOMEventName} from '../DOMEventNames';
-import type {DispatchQueue} from '../DOMPluginEventSystem';
-import type {EventSystemFlags} from '../EventSystemFlags';
+import type { AnyNativeEvent } from "../PluginModuleType";
+import type { DOMEventName } from "../DOMEventNames";
+import type { DispatchQueue } from "../DOMPluginEventSystem";
+import type { EventSystemFlags } from "../EventSystemFlags";
 
-import {registerDirectEvent} from '../EventRegistry';
-import {isReplayingEvent} from '../CurrentReplayingEvent';
-import {SyntheticMouseEvent, SyntheticPointerEvent} from '../SyntheticEvent';
+import { registerDirectEvent } from "../EventRegistry";
+import { isReplayingEvent } from "../CurrentReplayingEvent";
+import { SyntheticMouseEvent, SyntheticPointerEvent } from "../SyntheticEvent";
 import {
   getClosestInstanceFromNode,
   getNodeFromInstance,
   isContainerMarkedAsRoot,
-} from '../../client/ReactDOMComponentTree';
-import {accumulateEnterLeaveTwoPhaseListeners} from '../DOMPluginEventSystem';
-import type {KnownReactSyntheticEvent} from '../ReactSyntheticEventType';
+} from "../../client/ReactDOMComponentTree";
+import { accumulateEnterLeaveTwoPhaseListeners } from "../DOMPluginEventSystem";
+import type { KnownReactSyntheticEvent } from "../ReactSyntheticEventType";
 
-import {HostComponent, HostText} from 'react-reconciler/src/ReactWorkTags';
-import {getNearestMountedFiber} from 'react-reconciler/src/ReactFiberTreeReflection';
+import { HostComponent, HostText } from "react-reconciler/src/ReactWorkTags";
+import { getNearestMountedFiber } from "react-reconciler/src/ReactFiberTreeReflection";
 
 function registerEvents() {
-  registerDirectEvent('onMouseEnter', ['mouseout', 'mouseover']);
-  registerDirectEvent('onMouseLeave', ['mouseout', 'mouseover']);
-  registerDirectEvent('onPointerEnter', ['pointerout', 'pointerover']);
-  registerDirectEvent('onPointerLeave', ['pointerout', 'pointerover']);
+  // registerDirectEvent('onMouseEnter', ['mouseout', 'mouseover']);
+  // registerDirectEvent('onMouseLeave', ['mouseout', 'mouseover']);
+  // registerDirectEvent('onPointerEnter', ['pointerout', 'pointerover']);
+  // registerDirectEvent('onPointerLeave', ['pointerout', 'pointerover']);
 }
 
 /**
@@ -47,12 +47,12 @@ function extractEvents(
   nativeEvent: AnyNativeEvent,
   nativeEventTarget: null | EventTarget,
   eventSystemFlags: EventSystemFlags,
-  targetContainer: EventTarget,
+  targetContainer: EventTarget
 ) {
   const isOverEvent =
-    domEventName === 'mouseover' || domEventName === 'pointerover';
+    domEventName === "mouseover" || domEventName === "pointerover";
   const isOutEvent =
-    domEventName === 'mouseout' || domEventName === 'pointerout';
+    domEventName === "mouseout" || domEventName === "pointerout";
 
   if (isOverEvent && !isReplayingEvent(nativeEvent)) {
     // If this is an over event with a target, we might have already dispatched
@@ -120,14 +120,14 @@ function extractEvents(
   }
 
   let SyntheticEventCtor = SyntheticMouseEvent;
-  let leaveEventType = 'onMouseLeave';
-  let enterEventType = 'onMouseEnter';
-  let eventTypePrefix = 'mouse';
-  if (domEventName === 'pointerout' || domEventName === 'pointerover') {
+  let leaveEventType = "onMouseLeave";
+  let enterEventType = "onMouseEnter";
+  let eventTypePrefix = "mouse";
+  if (domEventName === "pointerout" || domEventName === "pointerover") {
     SyntheticEventCtor = SyntheticPointerEvent;
-    leaveEventType = 'onPointerLeave';
-    enterEventType = 'onPointerEnter';
-    eventTypePrefix = 'pointer';
+    leaveEventType = "onPointerLeave";
+    enterEventType = "onPointerEnter";
+    eventTypePrefix = "pointer";
   }
 
   const fromNode = from == null ? win : getNodeFromInstance(from);
@@ -135,10 +135,10 @@ function extractEvents(
 
   const leave = new SyntheticEventCtor(
     leaveEventType,
-    eventTypePrefix + 'leave',
+    eventTypePrefix + "leave",
     from,
     nativeEvent,
-    nativeEventTarget,
+    nativeEventTarget
   );
   leave.target = fromNode;
   leave.relatedTarget = toNode;
@@ -151,10 +151,10 @@ function extractEvents(
   if (nativeTargetInst === targetInst) {
     const enterEvent: KnownReactSyntheticEvent = new SyntheticEventCtor(
       enterEventType,
-      eventTypePrefix + 'enter',
+      eventTypePrefix + "enter",
       to,
       nativeEvent,
-      nativeEventTarget,
+      nativeEventTarget
     );
     enterEvent.target = toNode;
     enterEvent.relatedTarget = fromNode;
@@ -164,4 +164,4 @@ function extractEvents(
   accumulateEnterLeaveTwoPhaseListeners(dispatchQueue, leave, enter, from, to);
 }
 
-export {registerEvents, extractEvents};
+export { registerEvents, extractEvents };
