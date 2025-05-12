@@ -328,7 +328,6 @@ export function listenToNativeEvent(
   isCapturePhaseListener: boolean,
   target: EventTarget
 ): void {
-  debugger;
   if (__DEV__) {
     if (nonDelegatedEvents.has(domEventName) && !isCapturePhaseListener) {
       console.error(
@@ -381,12 +380,11 @@ export function listenToNativeEventForNonManagedEventTarget(
 const listeningMarker = "_reactListening" + Math.random().toString(36).slice(2);
 
 export function listenToAllSupportedEvents(rootContainerElement: EventTarget) {
-  debugger;
   // 用于检查事件有没有注册
   if (!(rootContainerElement: any)[listeningMarker]) {
     (rootContainerElement: any)[listeningMarker] = true;
     allNativeEvents.forEach((domEventName) => {
-      debugger;
+      ;
       // We handle selectionchange separately because it
       // doesn't bubble and needs to be on the document.
       if (domEventName !== "selectionchange") {

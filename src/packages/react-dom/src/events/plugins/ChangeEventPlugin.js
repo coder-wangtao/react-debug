@@ -35,16 +35,16 @@ import {
 import isCustomComponent from "../../shared/isCustomComponent";
 
 function registerEvents() {
-  // registerTwoPhaseEvent('onChange', [
-  //   'change',
-  //   'click',
-  //   'focusin',
-  //   'focusout',
-  //   'input',
-  //   'keydown',
-  //   'keyup',
-  //   'selectionchange',
-  // ]);
+  registerTwoPhaseEvent("onChange", [
+    "change",
+    "click",
+    "focusin",
+    "focusout",
+    "input",
+    "keydown",
+    "keyup",
+    "selectionchange",
+  ]);
 }
 
 function createAndAccumulateChangeEvent(
