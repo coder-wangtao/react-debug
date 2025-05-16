@@ -6,6 +6,11 @@ import EventApp from "@/components/event";
 import AsyncApp from "@/components/setState/async";
 import PromiseApp from "@/components/setState/promise";
 import EmptyComponent from "@/components/EmptyComponent";
+import ActionComponent from "@/components/useAction";
+import FormComponent from "@/components/form";
+import OptimisticComponent from "@/components/optimistic";
+import FormStatus from "@/components/formStatus";
+import Ref19 from "@/components/ref19";
 
 import AutomaticApp from "@/components/batching/Automatic";
 import ConcurrentApp from "@/components/batching/Concurrent";
@@ -14,7 +19,7 @@ function App() {
   return (
     <div id="app">
       {/* <RefApp /> */}
-      <Counter />
+      {/* <Counter /> */}
       {/* <UseEffectApp /> */}
       {/* <UseIdApp /> */}
       {/* <EmptyComponent /> */}
@@ -24,6 +29,7 @@ function App() {
 
       {/* <AutomaticApp /> */}
       {/* <ConcurrentApp /> */}
+      <Ref19 />
     </div>
   );
 }
