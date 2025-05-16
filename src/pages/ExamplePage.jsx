@@ -27,7 +27,6 @@ class ClassComponent extends Component {
 }
 
 function FunctionComponent(props) {
-  debugger;
   const [count1, setCount1] = useReducer((x) => x + 1, 0);
 
   // passive effect 异步执行

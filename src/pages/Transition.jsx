@@ -8,7 +8,7 @@ import ContactTab from "./ContactTab";
 import "./style.css";
 //useTransition 是 React 18 引入的新 Hook，用于标记非紧急的状态更新。
 // 在React的并发模式下，允许我们中断或延后某些状态更新，以便于能够在长时间的计算或数据拉取时保持UI的响应性。
-
+//延迟的不是状态更新本身，而是由状态更新触发的重渲染过程
 function Transition() {
   const [isPending, startTransition] = useTransition();
   const [tab, setTab] = useState("about");
