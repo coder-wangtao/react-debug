@@ -13,21 +13,22 @@ import type {
   PendingThenable,
   FulfilledThenable,
   RejectedThenable,
-} from 'shared/ReactTypes';
+} from "shared/ReactTypes";
 
-import isArray from 'shared/isArray';
+import isArray from "shared/isArray.js";
+import noop from "shared/noop";
 import {
   getIteratorFn,
   REACT_ELEMENT_TYPE,
   REACT_LAZY_TYPE,
   REACT_PORTAL_TYPE,
-} from 'shared/ReactSymbols';
-import {checkKeyStringCoercion} from 'shared/CheckStringCoercion';
+} from "shared/ReactSymbols";
+import { checkKeyStringCoercion } from "shared/CheckStringCoercion";
 
-import {isValidElement, cloneAndReplaceKey} from './jsx/ReactJSXElement';
+import { isValidElement, cloneAndReplaceKey } from "./jsx/ReactJSXElement";
 
-const SEPARATOR = '.';
-const SUBSEPARATOR = ':';
+const SEPARATOR = ".";
+const SUBSEPARATOR = ":";
 
 /**
  * Escape and wrap key so it is safe to use as a reactid
@@ -38,15 +39,15 @@ const SUBSEPARATOR = ':';
 function escape(key: string): string {
   const escapeRegex = /[=:]/g;
   const escaperLookup = {
-    '=': '=0',
-    ':': '=2',
+    "=": "=0",
+    ":": "=2",
   };
   const escapedString = key.replace(escapeRegex, function (match) {
     // $FlowFixMe[invalid-computed-prop]
     return escaperLookup[match];
   });
 
-  return '$' + escapedString;
+  return "$" + escapedString;
 }
 
 /**
@@ -58,7 +59,7 @@ let didWarnAboutMaps = false;
 
 const userProvidedKeyEscapeRegex = /\/+/g;
 function escapeUserProvidedKey(text: string): string {
-  return text.replace(userProvidedKeyEscapeRegex, '$&/');
+  return text.replace(userProvidedKeyEscapeRegex, "$&/");
 }
 
 /**
@@ -71,31 +72,29 @@ function escapeUserProvidedKey(text: string): string {
 function getElementKey(element: any, index: number): string {
   // Do some typechecking here since we call this blindly. We want to ensure
   // that we don't block potential future ES APIs.
-  if (typeof element === 'object' && element !== null && element.key != null) {
+  if (typeof element === "object" && element !== null && element.key != null) {
     // Explicit key
     if (__DEV__) {
       checkKeyStringCoercion(element.key);
     }
-    return escape('' + element.key);
+    return escape("" + element.key);
   }
   // Implicit key determined by the index in the set
   return index.toString(36);
 }
 
-function noop() {}
-
 function resolveThenable<T>(thenable: Thenable<T>): T {
   switch (thenable.status) {
-    case 'fulfilled': {
+    case "fulfilled": {
       const fulfilledValue: T = thenable.value;
       return fulfilledValue;
     }
-    case 'rejected': {
+    case "rejected": {
       const rejectedError = thenable.reason;
       throw rejectedError;
     }
     default: {
-      if (typeof thenable.status === 'string') {
+      if (typeof thenable.status === "string") {
         // Only instrument the thenable if the status if not defined. If
         // it's defined, but an unknown value, assume it's been instrumented by
         // some custom userspace implementation. We treat it as "pending".
@@ -108,32 +107,32 @@ function resolveThenable<T>(thenable: Thenable<T>): T {
         // TODO: Detect infinite ping loops caused by uncached promises.
 
         const pendingThenable: PendingThenable<T> = (thenable: any);
-        pendingThenable.status = 'pending';
+        pendingThenable.status = "pending";
         pendingThenable.then(
-          fulfilledValue => {
-            if (thenable.status === 'pending') {
+          (fulfilledValue) => {
+            if (thenable.status === "pending") {
               const fulfilledThenable: FulfilledThenable<T> = (thenable: any);
-              fulfilledThenable.status = 'fulfilled';
+              fulfilledThenable.status = "fulfilled";
               fulfilledThenable.value = fulfilledValue;
             }
           },
           (error: mixed) => {
-            if (thenable.status === 'pending') {
+            if (thenable.status === "pending") {
               const rejectedThenable: RejectedThenable<T> = (thenable: any);
-              rejectedThenable.status = 'rejected';
+              rejectedThenable.status = "rejected";
               rejectedThenable.reason = error;
             }
-          },
+          }
         );
       }
 
       // Check one more time in case the thenable resolved synchronously.
       switch ((thenable: Thenable<T>).status) {
-        case 'fulfilled': {
+        case "fulfilled": {
           const fulfilledThenable: FulfilledThenable<T> = (thenable: any);
           return fulfilledThenable.value;
         }
-        case 'rejected': {
+        case "rejected": {
           const rejectedThenable: RejectedThenable<T> = (thenable: any);
           const rejectedError = rejectedThenable.reason;
           throw rejectedError;
@@ -149,11 +148,11 @@ function mapIntoArray(
   array: Array<React$Node>,
   escapedPrefix: string,
   nameSoFar: string,
-  callback: (?React$Node) => ?ReactNodeList,
+  callback: (?React$Node) => ?ReactNodeList
 ): number {
   const type = typeof children;
 
-  if (type === 'undefined' || type === 'boolean') {
+  if (type === "undefined" || type === "boolean") {
     // All of the above are perceived as null.
     children = null;
   }
@@ -164,12 +163,12 @@ function mapIntoArray(
     invokeCallback = true;
   } else {
     switch (type) {
-      case 'bigint':
-      case 'string':
-      case 'number':
+      case "bigint":
+      case "string":
+      case "number":
         invokeCallback = true;
         break;
-      case 'object':
+      case "object":
         switch ((children: any).$$typeof) {
           case REACT_ELEMENT_TYPE:
           case REACT_PORTAL_TYPE:
@@ -183,7 +182,7 @@ function mapIntoArray(
               array,
               escapedPrefix,
               nameSoFar,
-              callback,
+              callback
             );
         }
     }
@@ -195,13 +194,13 @@ function mapIntoArray(
     // If it's the only child, treat the name as if it was wrapped in an array
     // so that it's consistent if the number of children grows:
     const childKey =
-      nameSoFar === '' ? SEPARATOR + getElementKey(child, 0) : nameSoFar;
+      nameSoFar === "" ? SEPARATOR + getElementKey(child, 0) : nameSoFar;
     if (isArray(mappedChild)) {
-      let escapedChildKey = '';
+      let escapedChildKey = "";
       if (childKey != null) {
-        escapedChildKey = escapeUserProvidedKey(childKey) + '/';
+        escapedChildKey = escapeUserProvidedKey(childKey) + "/";
       }
-      mapIntoArray(mappedChild, array, escapedChildKey, '', c => c);
+      mapIntoArray(mappedChild, array, escapedChildKey, "", (c) => c);
     } else if (mappedChild != null) {
       if (isValidElement(mappedChild)) {
         if (__DEV__) {
@@ -224,17 +223,17 @@ function mapIntoArray(
             (!child || child.key !== mappedChild.key)
               ? escapeUserProvidedKey(
                   // $FlowFixMe[unsafe-addition]
-                  '' + mappedChild.key, // eslint-disable-line react-internal/safe-string-coercion
-                ) + '/'
-              : '') +
-            childKey,
+                  "" + mappedChild.key // eslint-disable-line react-internal/safe-string-coercion
+                ) + "/"
+              : "") +
+            childKey
         );
         if (__DEV__) {
           // If `child` was an element without a `key`, we need to validate if
           // it should have had a `key`, before assigning one to `mappedChild`.
           // $FlowFixMe[incompatible-type] Flow incorrectly thinks React.Portal doesn't have a key
           if (
-            nameSoFar !== '' &&
+            nameSoFar !== "" &&
             child != null &&
             isValidElement(child) &&
             child.key == null
@@ -260,7 +259,7 @@ function mapIntoArray(
   let nextName;
   let subtreeCount = 0; // Count of children found in the current subtree.
   const nextNamePrefix =
-    nameSoFar === '' ? SEPARATOR : nameSoFar + SUBSEPARATOR;
+    nameSoFar === "" ? SEPARATOR : nameSoFar + SUBSEPARATOR;
 
   if (isArray(children)) {
     for (let i = 0; i < children.length; i++) {
@@ -271,12 +270,12 @@ function mapIntoArray(
         array,
         escapedPrefix,
         nextName,
-        callback,
+        callback
       );
     }
   } else {
     const iteratorFn = getIteratorFn(children);
-    if (typeof iteratorFn === 'function') {
+    if (typeof iteratorFn === "function") {
       const iterableChildren: Iterable<React$Node> & {
         entries: any,
       } = (children: any);
@@ -286,8 +285,8 @@ function mapIntoArray(
         if (iteratorFn === iterableChildren.entries) {
           if (!didWarnAboutMaps) {
             console.warn(
-              'Using Maps as children is not supported. ' +
-                'Use an array of keyed ReactElements instead.',
+              "Using Maps as children is not supported. " +
+                "Use an array of keyed ReactElements instead."
             );
           }
           didWarnAboutMaps = true;
@@ -306,17 +305,17 @@ function mapIntoArray(
           array,
           escapedPrefix,
           nextName,
-          callback,
+          callback
         );
       }
-    } else if (type === 'object') {
-      if (typeof (children: any).then === 'function') {
+    } else if (type === "object") {
+      if (typeof (children: any).then === "function") {
         return mapIntoArray(
           resolveThenable((children: any)),
           array,
           escapedPrefix,
           nameSoFar,
-          callback,
+          callback
         );
       }
 
@@ -325,14 +324,14 @@ function mapIntoArray(
 
       throw new Error(
         `Objects are not valid as a React child (found: ${
-          childrenString === '[object Object]'
-            ? 'object with keys {' +
-              Object.keys((children: any)).join(', ') +
-              '}'
+          childrenString === "[object Object]"
+            ? "object with keys {" +
+              Object.keys((children: any)).join(", ") +
+              "}"
             : childrenString
         }). ` +
-          'If you meant to render a collection of children, use an array ' +
-          'instead.',
+          "If you meant to render a collection of children, use an array " +
+          "instead."
       );
     }
   }
@@ -358,7 +357,7 @@ type MapFunc = (child: ?React$Node, index: number) => ?ReactNodeList;
 function mapChildren(
   children: ?ReactNodeList,
   func: MapFunc,
-  context: mixed,
+  context: mixed
 ): ?Array<React$Node> {
   if (children == null) {
     // $FlowFixMe limitation refining abstract types in Flow
@@ -366,7 +365,7 @@ function mapChildren(
   }
   const result: Array<React$Node> = [];
   let count = 0;
-  mapIntoArray(children, result, '', '', function (child) {
+  mapIntoArray(children, result, "", "", function (child) {
     return func.call(context, child, count++);
   });
   return result;
@@ -407,7 +406,7 @@ type ForEachFunc = (child: ?React$Node) => void;
 function forEachChildren(
   children: ?ReactNodeList,
   forEachFunc: ForEachFunc,
-  forEachContext: mixed,
+  forEachContext: mixed
 ): void {
   mapChildren(
     children,
@@ -416,7 +415,7 @@ function forEachChildren(
       forEachFunc.apply(this, arguments);
       // Don't return anything.
     },
-    forEachContext,
+    forEachContext
   );
 }
 
@@ -427,7 +426,7 @@ function forEachChildren(
  * See https://reactjs.org/docs/react-api.html#reactchildrentoarray
  */
 function toArray(children: ?ReactNodeList): Array<React$Node> {
-  return mapChildren(children, child => child) || [];
+  return mapChildren(children, (child) => child) || [];
 }
 
 /**
@@ -447,7 +446,7 @@ function toArray(children: ?ReactNodeList): Array<React$Node> {
 function onlyChild<T>(children: T): T {
   if (!isValidElement(children)) {
     throw new Error(
-      'React.Children.only expected to receive a single React element child.',
+      "React.Children.only expected to receive a single React element child."
     );
   }
 

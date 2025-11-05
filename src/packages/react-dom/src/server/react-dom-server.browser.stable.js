@@ -7,4 +7,9 @@
  * @flow
  */
 
-export {renderToReadableStream, version} from './ReactDOMFizzServerBrowser.js';
+export {
+  renderToReadableStream,
+  resume,
+  version,
+} from './ReactDOMFizzServerBrowser.js';
+export {prerender, resumeAndPrerender} from './ReactDOMFizzStaticBrowser.js';

@@ -7,4 +7,9 @@
  * @flow
  */
 
-export {renderToReadableStream, version} from './ReactDOMFizzServerEdge.js';
+export {
+  renderToReadableStream,
+  resume,
+  version,
+} from './ReactDOMFizzServerEdge.js';
+export {prerender, resumeAndPrerender} from './ReactDOMFizzStaticEdge.js';

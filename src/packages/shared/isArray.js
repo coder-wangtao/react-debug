@@ -7,7 +7,10 @@
  * @flow
  */
 
-declare function isArray(a: mixed): boolean %checks(Array.isArray(a));
+declare function isArray<T>(
+  v: T
+  // eslint-disable-next-line
+): any;
 
 const isArrayImpl = Array.isArray;
 

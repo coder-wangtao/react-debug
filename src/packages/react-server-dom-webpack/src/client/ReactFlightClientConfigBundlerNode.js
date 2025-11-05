@@ -24,7 +24,7 @@ import {
 } from '../shared/ReactFlightImportMetadata';
 import {prepareDestinationWithChunks} from 'react-client/src/ReactFlightClientConfig';
 
-export type SSRModuleMap = {
+export type ServerConsumerModuleMap = {
   [clientId: string]: {
     [clientExportName: string]: ClientReference<any>,
   },
@@ -58,23 +58,23 @@ export function prepareDestinationForModule(
 }
 
 export function resolveClientReference<T>(
-  bundlerConfig: SSRModuleMap,
+  bundlerConfig: ServerConsumerModuleMap,
   metadata: ClientReferenceMetadata,
 ): ClientReference<T> {
   const moduleExports = bundlerConfig[metadata[ID]];
-  let resolvedModuleData = moduleExports[metadata[NAME]];
+  let resolvedModuleData = moduleExports && moduleExports[metadata[NAME]];
   let name;
   if (resolvedModuleData) {
     // The potentially aliased name.
     name = resolvedModuleData.name;
   } else {
     // If we don't have this specific name, we might have the full module.
-    resolvedModuleData = moduleExports['*'];
+    resolvedModuleData = moduleExports && moduleExports['*'];
     if (!resolvedModuleData) {
       throw new Error(
         'Could not find the module "' +
           metadata[ID] +
-          '" in the React SSR Manifest. ' +
+          '" in the React Server Consumer Manifest. ' +
           'This is probably a bug in the React Server Components bundler.',
       );
     }
@@ -159,4 +159,10 @@ export function requireModule<T>(metadata: ClientReference<T>): T {
     return moduleExports.default;
   }
   return moduleExports[metadata.name];
+}
+
+export function getModuleDebugInfo<T>(metadata: ClientReference<T>): null {
+  // We don't emit any debug info on the server since we assume the loading
+  // of the bundle is insignificant on the server.
+  return null;
 }

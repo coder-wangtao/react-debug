@@ -32,9 +32,7 @@ describe('ReactDOMFizzStatic', () => {
     React = require('react');
     ReactDOM = require('react-dom');
     ReactDOMClient = require('react-dom/client');
-    if (__EXPERIMENTAL__) {
-      ReactDOMFizzStatic = require('react-dom/static');
-    }
+    ReactDOMFizzStatic = require('react-dom/static');
     Stream = require('stream');
     Suspense = React.Suspense;
 
@@ -108,7 +106,10 @@ describe('ReactDOMFizzStatic', () => {
           node.tagName !== 'TEMPLATE' &&
           node.tagName !== 'template' &&
           !node.hasAttribute('hidden') &&
-          !node.hasAttribute('aria-hidden')
+          !node.hasAttribute('aria-hidden') &&
+          // Ignore the render blocking expect
+          (node.getAttribute('rel') !== 'expect' ||
+            node.getAttribute('blocking') !== 'render')
         ) {
           const props = {};
           const attributes = node.attributes;
@@ -212,7 +213,6 @@ describe('ReactDOMFizzStatic', () => {
     return readText(text);
   }
 
-  // @gate experimental
   it('should render a fully static document, send it and then hydrate it', async () => {
     function App() {
       return (
@@ -230,7 +230,9 @@ describe('ReactDOMFizzStatic', () => {
 
     const result = await promise;
 
-    expect(result.postponed).toBe(null);
+    expect(result.postponed).toBe(
+      gate(flags => flags.enableHalt) ? null : undefined,
+    );
 
     await act(async () => {
       result.prelude.pipe(writable);
@@ -244,7 +246,6 @@ describe('ReactDOMFizzStatic', () => {
     expect(getVisibleChildren(container)).toEqual(<div>Hello</div>);
   });
 
-  // @gate experimental
   it('should support importMap option', async () => {
     const importMap = {
       foo: 'path/to/foo.js',
@@ -265,7 +266,6 @@ describe('ReactDOMFizzStatic', () => {
     ]);
   });
 
-  // @gate experimental
   it('supports onHeaders', async () => {
     let headers;
     function onHeaders(x) {
@@ -300,43 +300,6 @@ describe('ReactDOMFizzStatic', () => {
     expect(getVisibleChildren(container)).toEqual('hello');
   });
 
-  // @gate experimental && enablePostpone
-  it('includes stylesheet preloads in onHeaders when postponing in the Shell', async () => {
-    let headers;
-    function onHeaders(x) {
-      headers = x;
-    }
-
-    function App() {
-      ReactDOM.preload('image', {as: 'image', fetchPriority: 'high'});
-      ReactDOM.preinit('style', {as: 'style'});
-      React.unstable_postpone();
-      return (
-        <html>
-          <body>hello</body>
-        </html>
-      );
-    }
-
-    const result = await ReactDOMFizzStatic.prerenderToNodeStream(<App />, {
-      onHeaders,
-    });
-    expect(headers).toEqual({
-      Link: `
-<image>; rel=preload; as="image"; fetchpriority="high",
- <style>; rel=preload; as="style"
-`
-        .replaceAll('\n', '')
-        .trim(),
-    });
-
-    await act(async () => {
-      result.prelude.pipe(writable);
-    });
-    expect(getVisibleChildren(container)).toEqual(undefined);
-  });
-
-  // @gate experimental
   it('will prerender Suspense fallbacks before children', async () => {
     const values = [];
     function Indirection({children}) {
@@ -397,62 +360,6 @@ describe('ReactDOMFizzStatic', () => {
         <div>goodbye world</div>
       </div>,
     );
-  });
-
-  // @gate enablePostpone
-  it('does not fatally error when aborting with a postpone during a prerender', async () => {
-    let postponedValue;
-    try {
-      React.unstable_postpone('aborting with postpone');
-    } catch (e) {
-      postponedValue = e;
-    }
-
-    const controller = new AbortController();
-    const infinitePromise = new Promise(() => {});
-    function App() {
-      React.use(infinitePromise);
-      return <div>aborted</div>;
-    }
-
-    const pendingResult = ReactDOMFizzStatic.prerenderToNodeStream(<App />, {
-      signal: controller.signal,
-    });
-    pendingResult.catch(() => {});
-
-    await Promise.resolve();
-    controller.abort(postponedValue);
-
-    const result = await pendingResult;
-
-    await act(async () => {
-      result.prelude.pipe(writable);
-    });
-    expect(getVisibleChildren(container)).toEqual(undefined);
-  });
-
-  // @gate enablePostpone
-  it('does not fatally error when aborting with a postpone during a prerender from within', async () => {
-    let postponedValue;
-    try {
-      React.unstable_postpone('aborting with postpone');
-    } catch (e) {
-      postponedValue = e;
-    }
-
-    const controller = new AbortController();
-    function App() {
-      controller.abort(postponedValue);
-      return <div>aborted</div>;
-    }
-
-    const result = await ReactDOMFizzStatic.prerenderToNodeStream(<App />, {
-      signal: controller.signal,
-    });
-    await act(async () => {
-      result.prelude.pipe(writable);
-    });
-    expect(getVisibleChildren(container)).toEqual(undefined);
   });
 
   // @gate enableHalt

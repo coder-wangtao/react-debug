@@ -7,20 +7,18 @@
  * @flow
  */
 
-import type {Fiber, FiberRoot} from './ReactInternalTypes';
-import type {CapturedValue} from './ReactCapturedValue';
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
+import type { CapturedValue } from "./ReactCapturedValue";
 
-import getComponentNameFromFiber from 'react-reconciler/src/getComponentNameFromFiber';
+import getComponentNameFromFiber from "react-reconciler/src/getComponentNameFromFiber";
 
-import {ClassComponent} from './ReactWorkTags';
+import { ClassComponent } from "./ReactWorkTags";
 
-import reportGlobalError from 'shared/reportGlobalError';
+import reportGlobalError from "shared/reportGlobalError";
 
-import ReactSharedInternals from 'shared/ReactSharedInternals';
+import ReactSharedInternals from "shared/ReactSharedInternals";
 
-import {enableOwnerStacks} from 'shared/ReactFeatureFlags';
-
-import {bindToConsole} from './ReactFiberConfig';
+import { bindToConsole } from "./ReactFiberConfig";
 
 // Side-channel since I'm not sure we want to make this part of the public API
 let componentName: null | string = null;
@@ -28,7 +26,7 @@ let errorBoundaryName: null | string = null;
 
 export function defaultOnUncaughtError(
   error: mixed,
-  errorInfo: {+componentStack?: ?string},
+  errorInfo: { +componentStack?: ?string }
 ): void {
   // Overriding this can silence these warnings e.g. for tests.
   // See https://github.com/facebook/react/pull/13384
@@ -40,35 +38,21 @@ export function defaultOnUncaughtError(
   if (__DEV__) {
     const componentNameMessage = componentName
       ? `An error occurred in the <${componentName}> component.`
-      : 'An error occurred in one of your React components.';
+      : "An error occurred in one of your React components.";
 
     const errorBoundaryMessage =
-      'Consider adding an error boundary to your tree to customize error handling behavior.\n' +
-      'Visit https://react.dev/link/error-boundaries to learn more about error boundaries.';
+      "Consider adding an error boundary to your tree to customize error handling behavior.\n" +
+      "Visit https://react.dev/link/error-boundaries to learn more about error boundaries.";
 
-    const prevGetCurrentStack = ReactSharedInternals.getCurrentStack;
-    if (!enableOwnerStacks) {
-      // The current Fiber is disconnected at this point which means that console printing
-      // cannot add a component stack since it terminates at the deletion node. This is not
-      // a problem for owner stacks which are not disconnected but for the parent component
-      // stacks we need to use the snapshot we've previously extracted.
-      const componentStack =
-        errorInfo.componentStack != null ? errorInfo.componentStack : '';
-      ReactSharedInternals.getCurrentStack = function () {
-        return componentStack;
-      };
-    }
     try {
       console.warn(
-        '%s\n\n%s\n',
+        "%s\n\n%s\n",
         componentNameMessage,
-        errorBoundaryMessage,
+        errorBoundaryMessage
         // We let our console.error wrapper add the component stack to the end.
       );
     } finally {
-      if (!enableOwnerStacks) {
-        ReactSharedInternals.getCurrentStack = prevGetCurrentStack;
-      }
+      // ignore
     }
   }
 }
@@ -77,8 +61,8 @@ export function defaultOnCaughtError(
   error: mixed,
   errorInfo: {
     +componentStack?: ?string,
-    +errorBoundary?: ?React$Component<any, any>,
-  },
+    +errorBoundary?: any,
+  }
 ): void {
   // Overriding this can silence these warnings e.g. for tests.
   // See https://github.com/facebook/react/pull/13384
@@ -87,79 +71,65 @@ export function defaultOnCaughtError(
   if (__DEV__) {
     const componentNameMessage = componentName
       ? `The above error occurred in the <${componentName}> component.`
-      : 'The above error occurred in one of your React components.';
+      : "The above error occurred in one of your React components.";
 
     // In development, we provide our own message which includes the component stack
     // in addition to the error.
     const recreateMessage =
       `React will try to recreate this component tree from scratch ` +
       `using the error boundary you provided, ${
-        errorBoundaryName || 'Anonymous'
+        errorBoundaryName || "Anonymous"
       }.`;
 
-    const prevGetCurrentStack = ReactSharedInternals.getCurrentStack;
-    if (!enableOwnerStacks) {
-      // The current Fiber is disconnected at this point which means that console printing
-      // cannot add a component stack since it terminates at the deletion node. This is not
-      // a problem for owner stacks which are not disconnected but for the parent component
-      // stacks we need to use the snapshot we've previously extracted.
-      const componentStack =
-        errorInfo.componentStack != null ? errorInfo.componentStack : '';
-      ReactSharedInternals.getCurrentStack = function () {
-        return componentStack;
-      };
-    }
     try {
       if (
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        typeof error.environmentName === 'string'
+        typeof error.environmentName === "string"
       ) {
         // This was a Server error. We print the environment name in a badge just like we do with
         // replays of console logs to indicate that the source of this throw as actually the Server.
         bindToConsole(
-          'error',
+          "error",
           [
-            '%o\n\n%s\n\n%s\n',
+            "%o\n\n%s\n\n%s\n",
             error,
             componentNameMessage,
             recreateMessage,
             // We let DevTools or console.createTask add the component stack to the end.
           ],
-          error.environmentName,
+          error.environmentName
         )();
       } else {
         console.error(
-          '%o\n\n%s\n\n%s\n',
+          "%o\n\n%s\n\n%s\n",
           error,
           componentNameMessage,
-          recreateMessage,
+          recreateMessage
           // We let our DevTools or console.createTask add the component stack to the end.
         );
       }
     } finally {
-      if (!enableOwnerStacks) {
-        ReactSharedInternals.getCurrentStack = prevGetCurrentStack;
-      }
+      // ignore
     }
   } else {
     // In production, we print the error directly.
     // This will include the message, the JS stack, and anything the browser wants to show.
     // We pass the error object instead of custom message so that the browser displays the error natively.
-    console['error'](error); // Don't transform to our wrapper, however, React DevTools can still add a stack.
+    console["error"](error); // Don't transform to our wrapper, however, React DevTools can still add a stack.
   }
 }
 
 export function defaultOnRecoverableError(
   error: mixed,
-  errorInfo: {+componentStack?: ?string},
+  errorInfo: { +componentStack?: ?string }
 ) {
   reportGlobalError(error);
 }
 
 export function logUncaughtError(
   root: FiberRoot,
-  errorInfo: CapturedValue<mixed>,
+  errorInfo: CapturedValue<mixed>
 ): void {
   try {
     if (__DEV__) {
@@ -193,7 +163,7 @@ export function logUncaughtError(
 export function logCaughtError(
   root: FiberRoot,
   boundary: Fiber,
-  errorInfo: CapturedValue<mixed>,
+  errorInfo: CapturedValue<mixed>
 ): void {
   try {
     if (__DEV__) {

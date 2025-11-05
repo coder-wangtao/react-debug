@@ -10,21 +10,26 @@
 import type {Thenable, ReactCustomFormAction} from 'shared/ReactTypes.js';
 
 import type {
-  Response,
+  DebugChannel,
   FindSourceMapURLCallback,
+  Response,
 } from 'react-client/src/ReactFlightClient';
 
 import type {Readable} from 'stream';
 
 import {
   createResponse,
+  createStreamState,
   getRoot,
   reportGlobalError,
+  processStringChunk,
   processBinaryChunk,
   close,
 } from 'react-client/src/ReactFlightClient';
 
 import {createServerReference as createServerReferenceImpl} from 'react-client/src/ReactFlightReplyClient';
+
+export {registerServerReference} from 'react-client/src/ReactFlightReplyClient';
 
 function noServerCall() {
   throw new Error(
@@ -52,7 +57,33 @@ export type Options = {
   findSourceMapURL?: FindSourceMapURLCallback,
   replayConsoleLogs?: boolean,
   environmentName?: string,
+  startTime?: number,
+  endTime?: number,
+  // For the Node.js client we only support a single-direction debug channel.
+  debugChannel?: Readable,
 };
+
+function startReadingFromStream(
+  response: Response,
+  stream: Readable,
+  onEnd: () => void,
+): void {
+  const streamState = createStreamState(response, stream);
+
+  stream.on('data', chunk => {
+    if (typeof chunk === 'string') {
+      processStringChunk(response, streamState, chunk);
+    } else {
+      processBinaryChunk(response, streamState, chunk);
+    }
+  });
+
+  stream.on('error', error => {
+    reportGlobalError(response, error);
+  });
+
+  stream.on('end', onEnd);
+}
 
 function createFromNodeStream<T>(
   stream: Readable,
@@ -60,8 +91,14 @@ function createFromNodeStream<T>(
   moduleBaseURL: string,
   options?: Options,
 ): Thenable<T> {
+  const debugChannel: void | DebugChannel =
+    __DEV__ && options && options.debugChannel !== undefined
+      ? {hasReadable: true, callback: null}
+      : undefined;
+
   const response: Response = createResponse(
     moduleRootPath,
+    null,
     moduleBaseURL,
     noServerCall,
     options ? options.encodeFormAction : undefined,
@@ -74,14 +111,26 @@ function createFromNodeStream<T>(
     __DEV__ && options && options.environmentName
       ? options.environmentName
       : undefined,
+    __DEV__ && options && options.startTime != null
+      ? options.startTime
+      : undefined,
+    __DEV__ && options && options.endTime != null ? options.endTime : undefined,
+    debugChannel,
   );
-  stream.on('data', chunk => {
-    processBinaryChunk(response, chunk);
-  });
-  stream.on('error', error => {
-    reportGlobalError(response, error);
-  });
-  stream.on('end', () => close(response));
+
+  if (__DEV__ && options && options.debugChannel) {
+    let streamEndedCount = 0;
+    const handleEnd = () => {
+      if (++streamEndedCount === 2) {
+        close(response);
+      }
+    };
+    startReadingFromStream(response, options.debugChannel, handleEnd);
+    startReadingFromStream(response, stream, handleEnd);
+  } else {
+    startReadingFromStream(response, stream, close.bind(null, response));
+  }
+
   return getRoot(response);
 }
 

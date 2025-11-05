@@ -7,41 +7,51 @@
  * @flow
  */
 
-import type { FiberRoot } from "./ReactInternalTypes";
-import type { Lane, Lanes } from "./ReactFiberLane";
-import type { PriorityLevel } from "scheduler/src/SchedulerPriorities";
-import type { BatchConfigTransition } from "./ReactFiberTracingMarkerComponent";
+import type {FiberRoot} from './ReactInternalTypes';
+import type {Lane, Lanes} from './ReactFiberLane';
+import type {PriorityLevel} from 'scheduler/src/SchedulerPriorities';
+import type {Transition} from 'react/src/ReactStartTransition';
 
 import {
   disableLegacyMode,
-  enableDeferRootSchedulingToMicrotask,
   disableSchedulerTimeoutInWorkLoop,
   enableProfilerTimer,
   enableProfilerNestedUpdatePhase,
-} from "shared/ReactFeatureFlags";
+  enableComponentPerformanceTrack,
+  enableYieldingBeforePassive,
+  enableGestureTransition,
+  enableDefaultTransitionIndicator,
+} from 'shared/ReactFeatureFlags';
 import {
   NoLane,
   NoLanes,
   SyncLane,
+  DefaultLane,
   getHighestPriorityLane,
   getNextLanes,
   includesSyncLane,
   markStarvedLanesAsExpired,
-  claimNextTransitionLane,
+  claimNextTransitionUpdateLane,
   getNextLanesToFlushSync,
-} from "./ReactFiberLane";
+  checkIfRootIsPrerendering,
+  isGestureRender,
+} from './ReactFiberLane';
 import {
   CommitContext,
   NoContext,
   RenderContext,
-  flushPassiveEffects,
+  flushPendingEffects,
+  flushPendingEffectsDelayed,
   getExecutionContext,
   getWorkInProgressRoot,
   getWorkInProgressRootRenderLanes,
+  getRootWithPendingPassiveEffects,
+  getPendingPassiveEffectsLanes,
+  hasPendingCommitEffects,
   isWorkLoopSuspendedOnData,
   performWorkOnRoot,
-} from "./ReactFiberWorkLoop";
-import { LegacyRoot } from "./ReactRootTags";
+} from './ReactFiberWorkLoop';
+import {LegacyRoot} from './ReactRootTags';
 import {
   ImmediatePriority as ImmediateSchedulerPriority,
   UserBlockingPriority as UserBlockingSchedulerPriority,
@@ -50,30 +60,43 @@ import {
   cancelCallback as Scheduler_cancelCallback,
   scheduleCallback as Scheduler_scheduleCallback,
   now,
-} from "./Scheduler";
+} from './Scheduler';
 import {
   DiscreteEventPriority,
   ContinuousEventPriority,
   DefaultEventPriority,
   IdleEventPriority,
   lanesToEventPriority,
-} from "./ReactEventPriorities";
+} from './ReactEventPriorities';
 import {
   supportsMicrotasks,
   scheduleMicrotask,
   shouldAttemptEagerTransition,
-} from "./ReactFiberConfig";
+  trackSchedulerEvent,
+  noTimeout,
+} from './ReactFiberConfig';
 
-import ReactSharedInternals from "shared/ReactSharedInternals";
+import ReactSharedInternals from 'shared/ReactSharedInternals';
 import {
   resetNestedUpdateFlag,
   syncNestedUpdateFlag,
-} from "./ReactProfilerTimer";
+} from './ReactProfilerTimer';
+import {peekEntangledActionLane} from './ReactFiberAsyncAction';
+
+import noop from 'shared/noop';
+import reportGlobalError from 'shared/reportGlobalError';
+
+import {
+  startIsomorphicDefaultIndicatorIfNeeded,
+  hasOngoingIsomorphicIndicator,
+  retainIsomorphicIndicator,
+  markIsomorphicIndicatorHandled,
+} from './ReactFiberAsyncAction';
 
 // A linked list of all the roots with pending work. In an idiomatic app,
 // there's only a single root, but we do support multi root apps, hence this
 // extra complexity. But this module is optimized for the single root case.
-let firstScheduledRoot: FiberRoot | null = null;
+export let firstScheduledRoot: FiberRoot | null = null;
 let lastScheduledRoot: FiberRoot | null = null;
 
 // Used to prevent redundant mircotasks from being scheduled.
@@ -115,28 +138,7 @@ export function ensureRootIsScheduled(root: FiberRoot): void {
   // without consulting the schedule.
   mightHavePendingSyncWork = true;
 
-  // At the end of the current event, go through each of the roots and ensure
-  // there's a task scheduled for each one at the correct priority.
-  if (__DEV__ && ReactSharedInternals.actQueue !== null) {
-    // We're inside an `act` scope.
-    if (!didScheduleMicrotask_act) {
-      didScheduleMicrotask_act = true;
-      scheduleImmediateTask(processRootScheduleInMicrotask);
-    }
-  } else {
-    if (!didScheduleMicrotask) {
-      didScheduleMicrotask = true;
-      scheduleImmediateTask(processRootScheduleInMicrotask);
-    }
-  }
-
-  if (!enableDeferRootSchedulingToMicrotask) {
-    // While this flag is disabled, we schedule the render task immediately
-    // instead of waiting a microtask.
-    // TODO: We need to land enableDeferRootSchedulingToMicrotask ASAP to
-    // unblock additional features we have planned.
-    scheduleTaskForRootDuringMicrotask(root, now());
-  }
+  ensureScheduleIsScheduled();
 
   if (
     __DEV__ &&
@@ -146,6 +148,23 @@ export function ensureRootIsScheduled(root: FiberRoot): void {
   ) {
     // Special `act` case: Record whenever a legacy update is scheduled.
     ReactSharedInternals.didScheduleLegacyUpdate = true;
+  }
+}
+
+export function ensureScheduleIsScheduled(): void {
+  // At the end of the current event, go through each of the roots and ensure
+  // there's a task scheduled for each one at the correct priority.
+  if (__DEV__ && ReactSharedInternals.actQueue !== null) {
+    // We're inside an `act` scope.
+    if (!didScheduleMicrotask_act) {
+      didScheduleMicrotask_act = true;
+      scheduleImmediateRootScheduleTask();
+    }
+  } else {
+    if (!didScheduleMicrotask) {
+      didScheduleMicrotask = true;
+      scheduleImmediateRootScheduleTask();
+    }
   }
 }
 
@@ -164,151 +183,212 @@ export function flushSyncWorkOnLegacyRootsOnly() {
 }
 
 function flushSyncWorkAcrossRoots_impl(
-  syncTransitionLanes, // 需要被同步处理的 transition lanes
-  onlyLegacy // 是否仅处理 legacy（老旧模式）的 root
+  syncTransitionLanes: Lanes | Lane,
+  onlyLegacy: boolean,
 ) {
   if (isFlushingWork) {
-    // 防止函数重入（reentrancy），如果已经在处理工作，则直接返回。
-    // 这种防御性检查确保不会在嵌套调用时多次执行刷新。
+    // Prevent reentrancy.
+    // TODO: Is this overly defensive? The callers must check the execution
+    // context first regardless.
     return;
   }
 
   if (!mightHavePendingSyncWork) {
-    // 快速路径：如果没有同步工作需要处理，直接返回。
+    // Fast path. There's no sync work to do.
     return;
   }
 
-  // 初始化标志，用于记录是否有实际的工作被执行。
+  // There may or may not be synchronous work scheduled. Let's check.
   let didPerformSomeWork;
-  isFlushingWork = true; // 标记当前正在处理同步工作。
-
-  // 开始执行同步工作，确保所有需要处理的 root 都被刷新。
+  isFlushingWork = true;
   do {
-    didPerformSomeWork = false; // 重置标志，开始一轮工作。
-    let root = firstScheduledRoot; // 从调度队列中的第一个 root 开始处理。
-
+    didPerformSomeWork = false;
+    let root = firstScheduledRoot;
     while (root !== null) {
-      // 如果只处理 legacy 模式并且该 root 不是 legacy 模式的，跳过该 root。
       if (onlyLegacy && (disableLegacyMode || root.tag !== LegacyRoot)) {
-        // 跳过非 legacy 模式的 root。
+        // Skip non-legacy roots.
       } else {
-        // 如果 syncTransitionLanes 存在，则尝试处理对应的同步工作。
         if (syncTransitionLanes !== NoLanes) {
           const nextLanes = getNextLanesToFlushSync(root, syncTransitionLanes);
           if (nextLanes !== NoLanes) {
-            // 如果这个 root 有需要同步刷新的工作，执行该工作。
-            didPerformSomeWork = true; // 标记为已执行工作。
-            performSyncWorkOnRoot(root, nextLanes); // 执行同步工作。
+            // This root has pending sync work. Flush it now.
+            didPerformSomeWork = true;
+            performSyncWorkOnRoot(root, nextLanes);
           }
         } else {
-          // 如果没有 syncTransitionLanes，检查是否有同步工作。
-          const workInProgressRoot = getWorkInProgressRoot(); // 获取当前正在工作的 root。
+          const workInProgressRoot = getWorkInProgressRoot();
           const workInProgressRootRenderLanes =
-            getWorkInProgressRootRenderLanes(); // 获取当前渲染中的 lanes。
+            getWorkInProgressRootRenderLanes();
+          const rootHasPendingCommit =
+            root.cancelPendingCommit !== null ||
+            root.timeoutHandle !== noTimeout;
           const nextLanes = getNextLanes(
             root,
-            // 如果 root 是当前的工作 root，则使用它的 lanes；否则不使用 lanes。
             root === workInProgressRoot
               ? workInProgressRootRenderLanes
-              : NoLanes
+              : NoLanes,
+            rootHasPendingCommit,
           );
-          if (includesSyncLane(nextLanes)) {
-            // 如果这个 root 有同步工作的 lane，执行该工作。
-            didPerformSomeWork = true; // 标记为已执行工作。
-            performSyncWorkOnRoot(root, nextLanes); // 执行同步工作。
+          if (
+            (includesSyncLane(nextLanes) ||
+              (enableGestureTransition && isGestureRender(nextLanes))) &&
+            !checkIfRootIsPrerendering(root, nextLanes)
+          ) {
+            // This root has pending sync work. Flush it now.
+            didPerformSomeWork = true;
+            performSyncWorkOnRoot(root, nextLanes);
           }
         }
       }
-      // 移动到下一个 root 继续检查。
       root = root.next;
     }
   } while (didPerformSomeWork);
-  // 只要有工作执行过，就会继续执行循环，直到没有同步工作为止。
+  isFlushingWork = false;
+}
 
-  isFlushingWork = false; // 处理完成后，重置标记。
+function processRootScheduleInImmediateTask() {
+  if (enableProfilerTimer && enableComponentPerformanceTrack) {
+    // Track the currently executing event if there is one so we can ignore this
+    // event when logging events.
+    trackSchedulerEvent();
+  }
+
+  processRootScheduleInMicrotask();
 }
 
 function processRootScheduleInMicrotask() {
-  // 此函数总是在微任务中调用，不能同步调用。
-  didScheduleMicrotask = false; // 表示当前不再计划微任务。
+  // This function is always called inside a microtask. It should never be
+  // called synchronously.
+  didScheduleMicrotask = false;
   if (__DEV__) {
-    // 如果处于开发模式下，额外记录是否计划了微任务（仅在 act 测试中使用）。
     didScheduleMicrotask_act = false;
   }
 
-  // 我们将重新计算是否有可能存在同步工作。
+  // We'll recompute this as we iterate through all the roots and schedule them.
   mightHavePendingSyncWork = false;
 
-  let syncTransitionLanes = NoLanes; // 代表没有需要同步渲染的 Transition 工作。
+  let syncTransitionLanes = NoLanes;
   if (currentEventTransitionLane !== NoLane) {
-    // 检查当前事件中是否有正在进行的 Transition（异步更新）。
     if (shouldAttemptEagerTransition()) {
-      // 如果条件允许，我们会尝试将 Transition 工作同步渲染。
-      // 例如：在 popstate（浏览器回退/前进）事件中，我们会尝试同步渲染以保留页面滚动位置。
+      // A transition was scheduled during an event, but we're going to try to
+      // render it synchronously anyway. We do this during a popstate event to
+      // preserve the scroll position of the previous page.
       syncTransitionLanes = currentEventTransitionLane;
+    } else if (enableDefaultTransitionIndicator) {
+      // If we have a Transition scheduled by this event it might be paired
+      // with Default lane scheduled loading indicators. To unbatch it from
+      // other events later on, flush it early to determine whether it
+      // rendered an indicator. This ensures that setState in default priority
+      // event doesn't trigger onDefaultTransitionIndicator.
+      syncTransitionLanes = DefaultLane;
     }
-    currentEventTransitionLane = NoLane; // 处理完后，清空当前的 Transition。
   }
 
-  const currentTime = now(); // 获取当前时间，用于调度任务。
+  const currentTime = now();
 
-  let prev = null; // 记录链表中的前一个 root。
-  let root = firstScheduledRoot; // 从链表的第一个 root 开始迭代调度。
+  let prev = null;
+  let root = firstScheduledRoot;
   while (root !== null) {
-    // 遍历所有调度中的 root 节点。
-    const next = root.next; // 保存下一个 root 的引用，以便继续遍历。
+    const next = root.next;
     const nextLanes = scheduleTaskForRootDuringMicrotask(root, currentTime);
-    // 计算当前 root 在本次微任务中的需要处理的工作（Lanes）。
-
     if (nextLanes === NoLane) {
-      // 如果 root 没有更多的待处理工作，说明可以将其从调度队列中移除。
+      // This root has no more pending work. Remove it from the schedule. To
+      // guard against subtle reentrancy bugs, this microtask is the only place
+      // we do this — you can add roots to the schedule whenever, but you can
+      // only remove them here.
 
-      // 清除 root 的 next 指针，表示它已从调度链表中移除。
+      // Null this out so we know it's been removed from the schedule.
       root.next = null;
       if (prev === null) {
-        // 如果 prev 为 null，说明当前 root 是第一个节点，将链表头更新为下一个 root。
+        // This is the new head of the list
         firstScheduledRoot = next;
       } else {
-        // 否则，将前一个 root 的 next 指向下一个 root，跳过当前 root。
         prev.next = next;
       }
       if (next === null) {
-        // 如果 next 为 null，说明当前 root 是最后一个节点，更新链表的尾部。
+        // This is the new tail of the list
         lastScheduledRoot = prev;
       }
     } else {
-      // 如果 root 仍然有工作需要处理，将其保留在调度链表中。
+      // This root still has work. Keep it in the list.
       prev = root;
 
-      // 这是一个快速路径优化，目的是尽早退出 `flushSyncWorkOnAllRoots`。
-      // 如果我们确定没有剩余的同步工作可以执行时，就可以退出。
-      // 如果 syncTransitionLanes 已被设置，跳过此优化。
+      // This is a fast-path optimization to early exit from
+      // flushSyncWorkOnAllRoots if we can be certain that there is no remaining
+      // synchronous work to perform. Set this to true if there might be sync
+      // work left.
       if (
-        syncTransitionLanes !== NoLanes || // 如果有同步 Transition 工作，就标记同步工作存在。
-        includesSyncLane(nextLanes) // 否则，检查是否有同步的 lanes。
+        // Skip the optimization if syncTransitionLanes is set
+        syncTransitionLanes !== NoLanes ||
+        // Common case: we're not treating any extra lanes as synchronous, so we
+        // can just check if the next lanes are sync.
+        includesSyncLane(nextLanes) ||
+        (enableGestureTransition && isGestureRender(nextLanes))
       ) {
-        mightHavePendingSyncWork = true; // 标记当前可能存在同步工作。
+        mightHavePendingSyncWork = true;
       }
     }
-    root = next; // 移动到下一个 root 继续遍历。
+    root = next;
   }
 
-  // 在微任务的末尾，刷新所有待处理的同步工作。
-  // 必须放在最后执行，因为这些工作涉及实际的渲染操作，可能会抛出错误。
-  flushSyncWorkAcrossRoots_impl(syncTransitionLanes, false);
+  // At the end of the microtask, flush any pending synchronous work. This has
+  // to come at the end, because it does actual rendering work that might throw.
+  // If we're in the middle of a View Transition async sequence, we don't want to
+  // interrupt that sequence. Instead, we'll flush any remaining work when it
+  // completes.
+  if (!hasPendingCommitEffects()) {
+    flushSyncWorkAcrossRoots_impl(syncTransitionLanes, false);
+  }
+
+  if (currentEventTransitionLane !== NoLane) {
+    // Reset Event Transition Lane so that we allocate a new one next time.
+    currentEventTransitionLane = NoLane;
+    startDefaultTransitionIndicatorIfNeeded();
+  }
+}
+
+function startDefaultTransitionIndicatorIfNeeded() {
+  if (!enableDefaultTransitionIndicator) {
+    return;
+  }
+  // Check if we need to start an isomorphic indicator like if an async action
+  // was started.
+  startIsomorphicDefaultIndicatorIfNeeded();
+  // Check all the roots if there are any new indicators needed.
+  let root = firstScheduledRoot;
+  while (root !== null) {
+    if (root.indicatorLanes !== NoLanes && root.pendingIndicator === null) {
+      // We have new indicator lanes that requires a loading state. Start the
+      // default transition indicator.
+      if (hasOngoingIsomorphicIndicator()) {
+        // We already have an isomorphic indicator going which means it has to
+        // also apply to this root since it implies all roots have the same one.
+        // We retain this indicator so that it keeps going until we commit this
+        // root.
+        root.pendingIndicator = retainIsomorphicIndicator();
+      } else {
+        try {
+          const onDefaultTransitionIndicator =
+            root.onDefaultTransitionIndicator;
+          root.pendingIndicator = onDefaultTransitionIndicator() || noop;
+        } catch (x) {
+          root.pendingIndicator = noop;
+          reportGlobalError(x);
+        }
+      }
+    }
+    root = root.next;
+  }
 }
 
 function scheduleTaskForRootDuringMicrotask(
   root: FiberRoot,
-  currentTime: number
+  currentTime: number,
 ): Lane {
   // This function is always called inside a microtask, or at the very end of a
   // rendering task right before we yield to the main thread. It should never be
   // called synchronously.
-  //
-  // TODO: Unless enableDeferRootSchedulingToMicrotask is off. We need to land
-  // that ASAP to unblock additional features we have planned.
-  //
+
   // This function also never performs React work synchronously; it should
   // only schedule work to be performed later, in a separate task or microtask.
 
@@ -317,12 +397,24 @@ function scheduleTaskForRootDuringMicrotask(
   markStarvedLanesAsExpired(root, currentTime);
 
   // Determine the next lanes to work on, and their priority.
+  const rootWithPendingPassiveEffects = getRootWithPendingPassiveEffects();
+  const pendingPassiveEffectsLanes = getPendingPassiveEffectsLanes();
   const workInProgressRoot = getWorkInProgressRoot();
   const workInProgressRootRenderLanes = getWorkInProgressRootRenderLanes();
-  const nextLanes = getNextLanes(
-    root,
-    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
-  );
+  const rootHasPendingCommit =
+    root.cancelPendingCommit !== null || root.timeoutHandle !== noTimeout;
+  const nextLanes =
+    enableYieldingBeforePassive && root === rootWithPendingPassiveEffects
+      ? // This will schedule the callback at the priority of the lane but we used to
+        // always schedule it at NormalPriority. Discrete will flush it sync anyway.
+        // So the only difference is Idle and it doesn't seem necessarily right for that
+        // to get upgraded beyond something important just because we're past commit.
+        pendingPassiveEffectsLanes
+      : getNextLanes(
+          root,
+          root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
+          rootHasPendingCommit,
+        );
 
   const existingCallbackNode = root.callbackNode;
   if (
@@ -347,7 +439,13 @@ function scheduleTaskForRootDuringMicrotask(
   }
 
   // Schedule a new callback in the host environment.
-  if (includesSyncLane(nextLanes)) {
+  if (
+    includesSyncLane(nextLanes) &&
+    // If we're prerendering, then we should use the concurrent work loop
+    // even if the lanes are synchronous, so that prerendering never blocks
+    // the main thread.
+    !checkIfRootIsPrerendering(root, nextLanes)
+  ) {
     // Synchronous work is always flushed at the end of the microtask, so we
     // don't need to schedule an additional task.
     if (existingCallbackNode !== null) {
@@ -381,9 +479,10 @@ function scheduleTaskForRootDuringMicrotask(
 
     let schedulerPriorityLevel;
     switch (lanesToEventPriority(nextLanes)) {
+      // Scheduler does have an "ImmediatePriority", but now that we use
+      // microtasks for sync work we no longer use that. Any sync work that
+      // reaches this path is meant to be time sliced.
       case DiscreteEventPriority:
-        schedulerPriorityLevel = ImmediateSchedulerPriority;
-        break;
       case ContinuousEventPriority:
         schedulerPriorityLevel = UserBlockingSchedulerPriority;
         break;
@@ -400,7 +499,7 @@ function scheduleTaskForRootDuringMicrotask(
 
     const newCallbackNode = scheduleCallback(
       schedulerPriorityLevel,
-      performWorkOnRootViaSchedulerTask.bind(null, root)
+      performWorkOnRootViaSchedulerTask.bind(null, root),
     );
 
     root.callbackPriority = newCallbackPriority;
@@ -413,7 +512,7 @@ type RenderTaskFn = (didTimeout: boolean) => RenderTaskFn | null;
 
 function performWorkOnRootViaSchedulerTask(
   root: FiberRoot,
-  didTimeout: boolean
+  didTimeout: boolean,
 ): RenderTaskFn | null {
   // This is the entry point for concurrent tasks scheduled via Scheduler (and
   // postTask, in the future).
@@ -422,10 +521,29 @@ function performWorkOnRootViaSchedulerTask(
     resetNestedUpdateFlag();
   }
 
+  if (enableProfilerTimer && enableComponentPerformanceTrack) {
+    // Track the currently executing event if there is one so we can ignore this
+    // event when logging events.
+    trackSchedulerEvent();
+  }
+
+  if (hasPendingCommitEffects()) {
+    // We are currently in the middle of an async committing (such as a View Transition).
+    // We could force these to flush eagerly but it's better to defer any work until
+    // it finishes. This may not be the same root as we're waiting on.
+    // TODO: This relies on the commit eventually calling ensureRootIsScheduled which
+    // always calls processRootScheduleInMicrotask which in turn always loops through
+    // all the roots to figure out. This is all a bit inefficient and if optimized
+    // it'll need to consider rescheduling a task for any skipped roots.
+    root.callbackNode = null;
+    root.callbackPriority = NoLane;
+    return null;
+  }
+
   // Flush any pending passive effects before deciding which lanes to work on,
   // in case they schedule additional work.
   const originalCallbackNode = root.callbackNode;
-  const didFlushPassiveEffects = flushPassiveEffects();
+  const didFlushPassiveEffects = flushPendingEffectsDelayed();
   if (didFlushPassiveEffects) {
     // Something in the passive effect phase may have canceled the current task.
     // Check if the task node for this root was changed.
@@ -452,9 +570,12 @@ function performWorkOnRootViaSchedulerTask(
   // it's available).
   const workInProgressRoot = getWorkInProgressRoot();
   const workInProgressRootRenderLanes = getWorkInProgressRootRenderLanes();
+  const rootHasPendingCommit =
+    root.cancelPendingCommit !== null || root.timeoutHandle !== noTimeout;
   const lanes = getNextLanes(
     root,
-    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
+    rootHasPendingCommit,
   );
   if (lanes === NoLanes) {
     // No more work on this root.
@@ -476,7 +597,7 @@ function performWorkOnRootViaSchedulerTask(
   // only safe to do because we know we're at the end of the browser task.
   // So although it's not an actual microtask, it might as well be.
   scheduleTaskForRootDuringMicrotask(root, now());
-  if (root.callbackNode === originalCallbackNode) {
+  if (root.callbackNode != null && root.callbackNode === originalCallbackNode) {
     // The task node scheduled for this root is the same one that's
     // currently executed. Need to return a continuation.
     return performWorkOnRootViaSchedulerTask.bind(null, root);
@@ -485,25 +606,18 @@ function performWorkOnRootViaSchedulerTask(
 }
 
 function performSyncWorkOnRoot(root: FiberRoot, lanes: Lanes) {
-  // 这是同步任务的入口点，这些任务不通过 Scheduler 处理。
-
-  // 刷新被动效果，并检查是否有被动效果被执行
-  const didFlushPassiveEffects = flushPassiveEffects();
+  // This is the entry point for synchronous tasks that don't go
+  // through Scheduler.
+  const didFlushPassiveEffects = flushPendingEffects();
   if (didFlushPassiveEffects) {
-    // 如果被动效果已被刷新，退出到根调度器的外部工作循环，
-    // 以便重新计算优先级。
-    return null; // 退出当前函数，不进行进一步的处理
+    // If passive effects were flushed, exit to the outer work loop in the root
+    // scheduler, so we can recompute the priority.
+    return null;
   }
-
-  // 如果启用了性能分析器计时器和嵌套更新阶段，更新嵌套更新标志
   if (enableProfilerTimer && enableProfilerNestedUpdatePhase) {
     syncNestedUpdateFlag();
   }
-
-  // 强制同步渲染
   const forceSync = true;
-
-  // 执行根节点的工作，使用强制同步标志
   performWorkOnRoot(root, lanes, forceSync);
 }
 
@@ -511,7 +625,7 @@ const fakeActCallbackNode = {};
 
 function scheduleCallback(
   priorityLevel: PriorityLevel,
-  callback: RenderTaskFn
+  callback: RenderTaskFn,
 ) {
   if (__DEV__ && ReactSharedInternals.actQueue !== null) {
     // Special case: We're inside an `act` scope (a testing utility).
@@ -533,7 +647,7 @@ function cancelCallback(callbackNode: mixed) {
   }
 }
 
-function scheduleImmediateTask(cb: () => mixed) {
+function scheduleImmediateRootScheduleTask() {
   if (__DEV__ && ReactSharedInternals.actQueue !== null) {
     // Special case: Inside an `act` scope, we push microtasks to the fake `act`
     // callback queue. This is because we currently support calling `act`
@@ -541,7 +655,7 @@ function scheduleImmediateTask(cb: () => mixed) {
     // that you always await the result so that the microtasks have a chance to
     // run. But it hasn't happened yet.
     ReactSharedInternals.actQueue.push(() => {
-      cb();
+      processRootScheduleInMicrotask();
       return null;
     });
   }
@@ -563,14 +677,20 @@ function scheduleImmediateTask(cb: () => mixed) {
         // wrong semantically but it prevents an infinite loop. The bug is
         // Safari's, not ours, so we just do our best to not crash even though
         // the behavior isn't completely correct.
-        Scheduler_scheduleCallback(ImmediateSchedulerPriority, cb);
+        Scheduler_scheduleCallback(
+          ImmediateSchedulerPriority,
+          processRootScheduleInImmediateTask,
+        );
         return;
       }
-      cb();
+      processRootScheduleInMicrotask();
     });
   } else {
     // If microtasks are not supported, use Scheduler.
-    Scheduler_scheduleCallback(ImmediateSchedulerPriority, cb);
+    Scheduler_scheduleCallback(
+      ImmediateSchedulerPriority,
+      processRootScheduleInImmediateTask,
+    );
   }
 }
 
@@ -578,7 +698,7 @@ export function requestTransitionLane(
   // This argument isn't used, it's only here to encourage the caller to
   // check that it's inside a transition before calling this function.
   // TODO: Make this non-nullable. Requires a tweak to useOptimistic.
-  transition: BatchConfigTransition | null
+  transition: Transition | null,
 ): Lane {
   // The algorithm for assigning an update to a lane should be stable for all
   // updates at the same priority within the same event. To do this, the
@@ -589,11 +709,29 @@ export function requestTransitionLane(
   // over. Our heuristic for that is whenever we enter a concurrent work loop.
   if (currentEventTransitionLane === NoLane) {
     // All transitions within the same event are assigned the same lane.
-    currentEventTransitionLane = claimNextTransitionLane();
+    const actionScopeLane = peekEntangledActionLane();
+    currentEventTransitionLane =
+      actionScopeLane !== NoLane
+        ? // We're inside an async action scope. Reuse the same lane.
+          actionScopeLane
+        : // We may or may not be inside an async action scope. If we are, this
+          // is the first update in that scope. Either way, we need to get a
+          // fresh transition lane.
+          claimNextTransitionUpdateLane();
   }
   return currentEventTransitionLane;
 }
 
 export function didCurrentEventScheduleTransition(): boolean {
   return currentEventTransitionLane !== NoLane;
+}
+
+export function markIndicatorHandled(root: FiberRoot): void {
+  if (enableDefaultTransitionIndicator) {
+    // The current transition event rendered a synchronous loading state.
+    // Clear it from the indicator lanes. We don't need to show a separate
+    // loading state for this lane.
+    root.indicatorLanes &= ~currentEventTransitionLane;
+    markIsomorphicIndicatorHandled();
+  }
 }

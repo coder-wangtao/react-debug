@@ -18,12 +18,14 @@ import {
 describe('Store component filters', () => {
   let React;
   let Types;
+  let agent;
   let bridge: FrontendBridge;
   let store: Store;
   let utils;
   let actAsync;
 
   beforeEach(() => {
+    agent = global.agent;
     bridge = global.bridge;
     store = global.store;
     store.collapseNodesByDefault = false;
@@ -134,7 +136,180 @@ describe('Store component filters', () => {
     `);
   });
 
-  // @reactVersion >= 16.0
+  // @reactVersion >= 16.6
+  it('should filter Suspense', async () => {
+    const Suspense = React.Suspense;
+    await actAsync(async () =>
+      render(
+        <React.Fragment>
+          <Suspense>
+            <div>Visible</div>
+          </Suspense>
+          <Suspense>
+            <div>Hidden</div>
+          </Suspense>
+        </React.Fragment>,
+      ),
+    );
+
+    expect(store).toMatchInlineSnapshot(`
+      [root]
+        ▾ <Suspense>
+            <div>
+        ▾ <Suspense>
+            <div>
+      [suspense-root]  rects={[]}
+        <Suspense name="Unknown" rects={[]}>
+        <Suspense name="Unknown" rects={[]}>
+    `);
+
+    await actAsync(
+      async () =>
+        (store.componentFilters = [
+          utils.createElementTypeFilter(Types.ElementTypeActivity),
+        ]),
+    );
+
+    expect(store).toMatchInlineSnapshot(`
+      [root]
+        ▾ <Suspense>
+            <div>
+        ▾ <Suspense>
+            <div>
+      [suspense-root]  rects={[]}
+        <Suspense name="Unknown" rects={[]}>
+        <Suspense name="Unknown" rects={[]}>
+    `);
+
+    await actAsync(
+      async () =>
+        (store.componentFilters = [
+          utils.createElementTypeFilter(Types.ElementTypeActivity, false),
+        ]),
+    );
+
+    expect(store).toMatchInlineSnapshot(`
+      [root]
+        ▾ <Suspense>
+            <div>
+        ▾ <Suspense>
+            <div>
+      [suspense-root]  rects={[]}
+        <Suspense name="Unknown" rects={[]}>
+        <Suspense name="Unknown" rects={[]}>
+    `);
+  });
+
+  it('should filter Activity', async () => {
+    const Activity = React.Activity || React.unstable_Activity;
+
+    if (Activity != null) {
+      await actAsync(async () =>
+        render(
+          <React.Fragment>
+            <Activity mode="visible">
+              <div>Visible</div>
+            </Activity>
+            <Activity mode="hidden">
+              <div>Hidden</div>
+            </Activity>
+          </React.Fragment>,
+        ),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+        [root]
+          ▾ <Activity>
+              <div>
+            <Activity>
+      `);
+
+      await actAsync(
+        async () =>
+          (store.componentFilters = [
+            utils.createElementTypeFilter(Types.ElementTypeActivity),
+          ]),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+        [root]
+            <div>
+      `);
+
+      await actAsync(
+        async () =>
+          (store.componentFilters = [
+            utils.createElementTypeFilter(Types.ElementTypeActivity, false),
+          ]),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+        [root]
+          ▾ <Activity>
+              <div>
+            <Activity>
+      `);
+    }
+  });
+
+  it('should filter ViewTransition', async () => {
+    const ViewTransition =
+      React.ViewTransition || React.unstable_ViewTransition;
+
+    if (ViewTransition != null) {
+      await actAsync(async () =>
+        render(
+          <React.Fragment>
+            <ViewTransition>
+              <div>Visible</div>
+            </ViewTransition>
+            <ViewTransition>
+              <div>Hidden</div>
+            </ViewTransition>
+          </React.Fragment>,
+        ),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+              [root]
+                ▾ <ViewTransition>
+                    <div>
+                ▾ <ViewTransition>
+                    <div>
+          `);
+
+      await actAsync(
+        async () =>
+          (store.componentFilters = [
+            utils.createElementTypeFilter(Types.ElementTypeActivity),
+          ]),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+              [root]
+                ▾ <ViewTransition>
+                    <div>
+                ▾ <ViewTransition>
+                    <div>
+          `);
+
+      await actAsync(
+        async () =>
+          (store.componentFilters = [
+            utils.createElementTypeFilter(Types.ElementTypeActivity, false),
+          ]),
+      );
+
+      expect(store).toMatchInlineSnapshot(`
+              [root]
+                ▾ <ViewTransition>
+                    <div>
+                ▾ <ViewTransition>
+                    <div>
+          `);
+    }
+  });
+
   it('should ignore invalid ElementTypeRoot filter', async () => {
     const Component = () => <div>Hi</div>;
 
@@ -343,7 +518,11 @@ describe('Store component filters', () => {
 
     const Component = ({shouldSuspend}) => {
       if (shouldSuspend) {
-        throw promise;
+        if (React.use) {
+          React.use(promise);
+        } else {
+          throw promise;
+        }
       }
       return null;
     };
@@ -562,5 +741,81 @@ describe('Store component filters', () => {
             <ComponentWithWarningAndError> ✕⚠
       `);
     });
+  });
+
+  // @reactVersion >= 16.6
+  it('resets forced error and fallback states when filters are changed', async () => {
+    store.componentFilters = [];
+    class ErrorBoundary extends React.Component {
+      state = {hasError: false};
+
+      static getDerivedStateFromError() {
+        return {hasError: true};
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return <div key="did-error" />;
+        }
+        return this.props.children;
+      }
+    }
+
+    function App() {
+      return (
+        <>
+          <React.Suspense fallback={<div key="loading" />}>
+            <div key="suspense-content" />
+          </React.Suspense>
+          <ErrorBoundary>
+            <div key="error-content" />
+          </ErrorBoundary>
+        </>
+      );
+    }
+
+    await actAsync(async () => {
+      render(<App />);
+    });
+    const rendererID = utils.getRendererID();
+    await actAsync(() => {
+      agent.overrideSuspense({
+        id: store.getElementIDAtIndex(2),
+        rendererID,
+        forceFallback: true,
+      });
+      agent.overrideError({
+        id: store.getElementIDAtIndex(4),
+        rendererID,
+        forceError: true,
+      });
+    });
+
+    expect(store).toMatchInlineSnapshot(`
+      [root]
+        ▾ <App>
+          ▾ <Suspense>
+              <div key="loading">
+          ▾ <ErrorBoundary>
+              <div key="did-error">
+      [suspense-root]  rects={[]}
+        <Suspense name="App" rects={[]}>
+    `);
+
+    await actAsync(() => {
+      store.componentFilters = [
+        utils.createElementTypeFilter(Types.ElementTypeFunction, true),
+      ];
+    });
+
+    expect(store).toMatchInlineSnapshot(`
+      [root]
+        ▾ <Suspense>
+            <div key="suspense-content">
+        ▾ <ErrorBoundary>
+            <div key="error-content">
+      [suspense-root]  rects={[]}
+        <Suspense name="Unknown" rects={[]}>
+    `);
   });
 });

@@ -26,7 +26,7 @@
 declare const $$$config: any;
 
 export opaque type ModuleLoading = mixed;
-export opaque type SSRModuleMap = mixed;
+export opaque type ServerConsumerModuleMap = mixed;
 export opaque type ServerManifest = mixed;
 export opaque type ServerReferenceId = string;
 export opaque type ClientReferenceMetadata = mixed;
@@ -35,6 +35,7 @@ export const resolveClientReference = $$$config.resolveClientReference;
 export const resolveServerReference = $$$config.resolveServerReference;
 export const preloadModule = $$$config.preloadModule;
 export const requireModule = $$$config.requireModule;
+export const getModuleDebugInfo = $$$config.getModuleDebugInfo;
 export const dispatchHint = $$$config.dispatchHint;
 export const prepareDestinationForModule =
   $$$config.prepareDestinationForModule;

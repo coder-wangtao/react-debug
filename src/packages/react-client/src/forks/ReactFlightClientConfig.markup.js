@@ -16,7 +16,7 @@ export * from 'react-markup/src/ReactMarkupLegacyClientStreamConfig.js';
 export * from 'react-client/src/ReactClientConsoleConfigPlain';
 
 export type ModuleLoading = null;
-export type SSRModuleMap = null;
+export type ServerConsumerModuleMap = null;
 export opaque type ServerManifest = null;
 export opaque type ServerReferenceId = string;
 export opaque type ClientReferenceMetadata = null;
@@ -33,7 +33,7 @@ export function prepareDestinationForModule(
 }
 
 export function resolveClientReference<T>(
-  bundlerConfig: SSRModuleMap,
+  bundlerConfig: ServerConsumerModuleMap,
   metadata: ClientReferenceMetadata,
 ): ClientReference<T> {
   throw new Error(
@@ -57,6 +57,12 @@ export function preloadModule<T>(
 }
 
 export function requireModule<T>(metadata: ClientReference<T>): T {
+  throw new Error(
+    'renderToHTML should not have emitted Client References. This is a bug in React.',
+  );
+}
+
+export function getModuleDebugInfo<T>(metadata: ClientReference<T>): null {
   throw new Error(
     'renderToHTML should not have emitted Client References. This is a bug in React.',
   );

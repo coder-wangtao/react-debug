@@ -116,6 +116,16 @@ function shouldIgnoreConsoleErrorOrWarn(args) {
     return false;
   }
 
+  const maybeError = args[1];
+  if (
+    maybeError !== null &&
+    typeof maybeError === 'object' &&
+    maybeError.message === 'Simulated error coming from DevTools'
+  ) {
+    // Error from forcing an error boundary.
+    return true;
+  }
+
   return global._ignoredErrorOrWarningMessages.some(errorOrWarningMessage => {
     return firstArg.indexOf(errorOrWarningMessage) !== -1;
   });
@@ -141,7 +151,7 @@ function patchConsoleForTestingBeforeHookInstallation() {
       // if they use this code path.
       firstArg = firstArg.slice(9);
     }
-    if (firstArg === 'React instrumentation encountered an error: %s') {
+    if (firstArg === 'React instrumentation encountered an error: %o') {
       // Rethrow errors from React.
       throw args[1];
     } else if (
@@ -256,7 +266,9 @@ beforeEach(() => {
     },
   });
 
-  const store = new Store(((bridge: any): FrontendBridge));
+  const store = new Store(((bridge: any): FrontendBridge), {
+    supportsTimeline: true,
+  });
 
   const agent = new Agent(((bridge: any): BackendBridge));
   const hook = global.__REACT_DEVTOOLS_GLOBAL_HOOK__;

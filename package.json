@@ -133,7 +133,13 @@
   },
   "babel": {
     "presets": [
-      "react-app"
+      "react-app",
+      "@babel/preset-env",
+      "@babel/preset-flow"
     ]
+  },
+  "devDependencies": {
+    "@babel/preset-flow": "^7.27.1",
+    "@babel/preset-typescript": "^7.28.5"
   }
 }
