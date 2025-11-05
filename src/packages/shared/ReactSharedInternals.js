@@ -5,11 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  *
  * @flow
- */
-
-import * as React from 'react';
-
-const ReactSharedInternals =
-  React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
-
+//  */
+// import * as React from 'react'
+// import ReactSharedInternals from 'react/src/ReactSharedInternals'
+// const ReactSharedInternals =
+//   __CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+// debugger;
+import ReactSharedInternals from "react/src/ReactSharedInternalsClient";
 export default ReactSharedInternals;
