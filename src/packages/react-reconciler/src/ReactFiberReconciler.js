@@ -311,6 +311,9 @@ export function createHydrationContainer(
   transitionCallbacks: null | TransitionTracingCallbacks,
   formState: ReactFormState<any, any> | null
 ): OpaqueRoot {
+  // 建立一个配置为水合模式的 FiberRootNode ，并立即调度一个特殊的“水合更新”。
+  // 这个更新将启动 React 的协调过程，但与常规渲染不同，
+  // 它会尝试将 initialChildren 与 containerInfo 中已存在的 DOM 结构进行匹配和复用，而不是完全重新创建 DOM。
   const hydrate = true;
   const root = createFiberRoot(
     containerInfo,
@@ -339,16 +342,25 @@ export function createHydrationContainer(
   // NOTE: This update intentionally doesn't have a payload. We're only using
   // the update to schedule work on the root fiber (and, for legacy roots, to
   // enqueue the callback if one is provided).
+
   const current = root.current;
-  let lane = requestUpdateLane(current);
+
+  let lane = requestUpdateLane(current); // 获取一个用于本次更新的优先级(Lane)。React 的并发调度模型使用 Lanes 来管理不同优先级的更新。
   if (enableHydrationLaneScheduling) {
+    // 这是一个特性开关，如果启用，可能会对水合的 Lane 进行特殊调整 (例如，通过 getBumpedLaneForHydrationByLane 提升其优先级或赋予特定属性)，
+    // 以确保水合过程能尽快或以特定方式执行
     lane = getBumpedLaneForHydrationByLane(lane);
   }
+  // 创建一个更新对象。对于初始水合，这个更新对象通常不携带 payload (即没有新的 element 数据)，
+  // 因为其目的是触发对 initialChildren (已在 FiberRootNode 中设置) 的水合处理，而不是渲染新的内容。
   const update = createUpdate(lane);
   update.callback =
     callback !== undefined && callback !== null ? callback : null;
-  enqueueUpdate(current, update, lane);
+  enqueueUpdate(current, update, lane); // 将创建的更新对象添加到 HostRoot Fiber 的更新队列中。这使得该更新成为待处理状态。
   startUpdateTimerByLane(lane, "hydrateRoot()", null);
+  // 这是触发实际水合工作调度的关键函数。它会确保 React 的调度器 (Scheduler)
+  // 知道有一个水合任务需要在指定的 lane 上执行。
+  // 这个函数内部会进一步调用调度相关的 API (如 ensureRootIsScheduled ) 来安排工作循环的启动。
   scheduleInitialHydrationOnRoot(root, lane);
 
   return root;

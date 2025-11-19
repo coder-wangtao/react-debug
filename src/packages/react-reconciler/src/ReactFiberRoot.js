@@ -208,10 +208,10 @@ export function createFiberRoot(
 
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
+  // 建立 fiberRootNode 与 HostRoot Fiber 之间的关系
   const uninitializedFiber = createHostRootFiber(tag, isStrictMode);
   root.current = uninitializedFiber;
   uninitializedFiber.stateNode = root;
-
   const initialCache = createCache();
   retainCache(initialCache);
 
@@ -222,7 +222,7 @@ export function createFiberRoot(
   // component if rendering suspends. Because the lifetime of the pooled
   // cache is distinct from the main memoizedState.cache, it must be
   // retained separately.
-  root.pooledCache = initialCache;
+  root.pooledCache = initialCache; // root.pooledCache是一个特殊的缓存，用于在渲染过程中为新挂载的组件（特别是 Suspense 边界）提供临时的缓存。它在每次渲染提交后会被清理或转移。
   retainCache(initialCache);
   const initialState: RootState = {
     element: initialChildren,
