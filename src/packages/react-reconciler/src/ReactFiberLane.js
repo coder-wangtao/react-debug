@@ -37,25 +37,33 @@ import { LegacyRoot } from "./ReactRootTags";
 // Lane values below should be kept in sync with getLabelForLane(), used by react-devtools-timeline.
 // If those values are changed that package should be rebuilt and redeployed.
 
+// 31位二进制数
 export const TotalLanes = 31;
 
 export const NoLanes: Lanes = /*                        */ 0b0000000000000000000000000000000;
 export const NoLane: Lane = /*                          */ 0b0000000000000000000000000000000;
 
 export const SyncHydrationLane: Lane = /*               */ 0b0000000000000000000000000000001;
+// 最高优先级，用于必须同步执行的更新（例如，由 flushSync 触发的更新，或某些离散的用户输入）。
 export const SyncLane: Lane = /*                        */ 0b0000000000000000000000000000010;
 export const SyncLaneIndex: number = 1;
 
 export const InputContinuousHydrationLane: Lane = /*    */ 0b0000000000000000000000000000100;
+// 用于处理用户输入，确保 UI 响应迅速
 export const InputContinuousLane: Lane = /*             */ 0b0000000000000000000000000001000;
 
 export const DefaultHydrationLane: Lane = /*            */ 0b0000000000000000000000000010000;
+// 普通的异步更新，如 setState 或 useEffect 触发的更新
 export const DefaultLane: Lane = /*                     */ 0b0000000000000000000000000100000;
 
 export const SyncUpdateLanes: Lane =
   SyncLane | InputContinuousLane | DefaultLane;
 
+// 专门用于处理由手势交互（例如触摸设备上的滑动、捏合缩放等）触发的更新
 export const GestureLane: Lane = /*                     */ 0b0000000000000000000000001000000;
+
+// 用于通过 startTransition API 标记的更新。这些更新被认为是“可过渡的”，
+// 优先级较低，可以被更高优先级的更新中断，以保持 UI 的响应性。React 19 进一步强化了 Actions 和 useTransition 的概念，这些都依赖于 Transition Lanes。
 
 const TransitionHydrationLane: Lane = /*                */ 0b0000000000000000000000010000000;
 const TransitionLanes: Lanes = /*                       */ 0b0000000001111111111111100000000;
@@ -90,6 +98,7 @@ const TransitionUpdateLanes =
 const TransitionDeferredLanes =
   TransitionLane11 | TransitionLane12 | TransitionLane13 | TransitionLane14;
 
+// 用于安排之前因 Suspense 而挂起的工作的重试。
 const RetryLanes: Lanes = /*                            */ 0b0000011110000000000000000000000;
 const RetryLane1: Lane = /*                             */ 0b0000000010000000000000000000000;
 const RetryLane2: Lane = /*                             */ 0b0000000100000000000000000000000;
@@ -98,11 +107,13 @@ const RetryLane4: Lane = /*                             */ 0b0000010000000000000
 
 export const SomeRetryLane: Lane = RetryLane1;
 
+//  用于服务器端渲染 (SSR) 的选择性水合过程
 export const SelectiveHydrationLane: Lane = /*          */ 0b0000100000000000000000000000000;
 
 const NonIdleLanes: Lanes = /*                          */ 0b0000111111111111111111111111111;
 
 export const IdleHydrationLane: Lane = /*               */ 0b0001000000000000000000000000000;
+//  最低优先级，用于可以在浏览器空闲时执行的工作，例如离屏渲染或非常低优先级的后台任务。
 export const IdleLane: Lane = /*                        */ 0b0010000000000000000000000000000;
 
 export const OffscreenLane: Lane = /*                   */ 0b0100000000000000000000000000000;
@@ -249,6 +260,8 @@ export function getNextLanes(
 ): Lanes {
   // Early bailout if there's no pending work left.
   const pendingLanes = root.pendingLanes;
+
+  // 如果没有任何待处理的 lane，直接返回
   if (pendingLanes === NoLanes) {
     return NoLanes;
   }
@@ -274,6 +287,7 @@ export function getNextLanes(
 
   // Do not work on any idle work until all the non-idle work has finished,
   // even if the work is suspended.
+  // 如果没有特定高优任务，则返回所有待处理任务中优先级最高的那个
   const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
   if (nonIdlePendingLanes !== NoLanes) {
     // First check for fresh updates.

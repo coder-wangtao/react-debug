@@ -7,15 +7,15 @@
  * @flow
  */
 
-import type {EventPriority} from 'react-reconciler/src/ReactEventPriorities';
+import type { EventPriority } from "react-reconciler/src/ReactEventPriorities";
 
-import {getEventPriority} from '../events/ReactDOMEventListener';
+import { getEventPriority } from "../events/ReactDOMEventListener";
 import {
   NoEventPriority,
   DefaultEventPriority,
-} from 'react-reconciler/src/ReactEventPriorities';
+} from "react-reconciler/src/ReactEventPriorities";
 
-import ReactDOMSharedInternals from 'shared/ReactDOMSharedInternals';
+import ReactDOMSharedInternals from "shared/ReactDOMSharedInternals";
 
 export function setCurrentUpdatePriority(
   newPriority: EventPriority,
@@ -23,7 +23,7 @@ export function setCurrentUpdatePriority(
   // however when it has arity 2 even if the second arg is omitted at every
   // callsite it seems to inline it even when the internal length of the function
   // is much longer. I hope this is consistent enough to rely on across builds
-  IntentionallyUnusedArgument?: empty,
+  IntentionallyUnusedArgument?: empty
 ): void {
   ReactDOMSharedInternals.p /* currentUpdatePriority */ = newPriority;
 }
@@ -32,6 +32,7 @@ export function getCurrentUpdatePriority(): EventPriority {
   return ReactDOMSharedInternals.p; /* currentUpdatePriority */
 }
 
+// 解析当前更新的优先级
 export function resolveUpdatePriority(): EventPriority {
   const updatePriority = ReactDOMSharedInternals.p; /* currentUpdatePriority */
   if (updatePriority !== NoEventPriority) {

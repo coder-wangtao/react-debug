@@ -7,10 +7,10 @@
  * @flow
  */
 
-import type {FiberRoot} from './ReactInternalTypes';
-import type {Lane, Lanes} from './ReactFiberLane';
-import type {PriorityLevel} from 'scheduler/src/SchedulerPriorities';
-import type {Transition} from 'react/src/ReactStartTransition';
+import type { FiberRoot } from "./ReactInternalTypes";
+import type { Lane, Lanes } from "./ReactFiberLane";
+import type { PriorityLevel } from "scheduler/src/SchedulerPriorities";
+import type { Transition } from "react/src/ReactStartTransition";
 
 import {
   disableLegacyMode,
@@ -21,7 +21,7 @@ import {
   enableYieldingBeforePassive,
   enableGestureTransition,
   enableDefaultTransitionIndicator,
-} from 'shared/ReactFeatureFlags';
+} from "shared/ReactFeatureFlags";
 import {
   NoLane,
   NoLanes,
@@ -35,7 +35,7 @@ import {
   getNextLanesToFlushSync,
   checkIfRootIsPrerendering,
   isGestureRender,
-} from './ReactFiberLane';
+} from "./ReactFiberLane";
 import {
   CommitContext,
   NoContext,
@@ -50,8 +50,8 @@ import {
   hasPendingCommitEffects,
   isWorkLoopSuspendedOnData,
   performWorkOnRoot,
-} from './ReactFiberWorkLoop';
-import {LegacyRoot} from './ReactRootTags';
+} from "./ReactFiberWorkLoop";
+import { LegacyRoot } from "./ReactRootTags";
 import {
   ImmediatePriority as ImmediateSchedulerPriority,
   UserBlockingPriority as UserBlockingSchedulerPriority,
@@ -60,38 +60,38 @@ import {
   cancelCallback as Scheduler_cancelCallback,
   scheduleCallback as Scheduler_scheduleCallback,
   now,
-} from './Scheduler';
+} from "./Scheduler";
 import {
   DiscreteEventPriority,
   ContinuousEventPriority,
   DefaultEventPriority,
   IdleEventPriority,
   lanesToEventPriority,
-} from './ReactEventPriorities';
+} from "./ReactEventPriorities";
 import {
   supportsMicrotasks,
   scheduleMicrotask,
   shouldAttemptEagerTransition,
   trackSchedulerEvent,
   noTimeout,
-} from './ReactFiberConfig';
+} from "./ReactFiberConfig";
 
-import ReactSharedInternals from 'shared/ReactSharedInternals';
+import ReactSharedInternals from "shared/ReactSharedInternals";
 import {
   resetNestedUpdateFlag,
   syncNestedUpdateFlag,
-} from './ReactProfilerTimer';
-import {peekEntangledActionLane} from './ReactFiberAsyncAction';
+} from "./ReactProfilerTimer";
+import { peekEntangledActionLane } from "./ReactFiberAsyncAction";
 
-import noop from 'shared/noop';
-import reportGlobalError from 'shared/reportGlobalError';
+import noop from "shared/noop";
+import reportGlobalError from "shared/reportGlobalError";
 
 import {
   startIsomorphicDefaultIndicatorIfNeeded,
   hasOngoingIsomorphicIndicator,
   retainIsomorphicIndicator,
   markIsomorphicIndicatorHandled,
-} from './ReactFiberAsyncAction';
+} from "./ReactFiberAsyncAction";
 
 // A linked list of all the roots with pending work. In an idiomatic app,
 // there's only a single root, but we do support multi root apps, hence this
@@ -184,7 +184,7 @@ export function flushSyncWorkOnLegacyRootsOnly() {
 
 function flushSyncWorkAcrossRoots_impl(
   syncTransitionLanes: Lanes | Lane,
-  onlyLegacy: boolean,
+  onlyLegacy: boolean
 ) {
   if (isFlushingWork) {
     // Prevent reentrancy.
@@ -227,7 +227,7 @@ function flushSyncWorkAcrossRoots_impl(
             root === workInProgressRoot
               ? workInProgressRootRenderLanes
               : NoLanes,
-            rootHasPendingCommit,
+            rootHasPendingCommit
           );
           if (
             (includesSyncLane(nextLanes) ||
@@ -383,7 +383,7 @@ function startDefaultTransitionIndicatorIfNeeded() {
 
 function scheduleTaskForRootDuringMicrotask(
   root: FiberRoot,
-  currentTime: number,
+  currentTime: number
 ): Lane {
   // This function is always called inside a microtask, or at the very end of a
   // rendering task right before we yield to the main thread. It should never be
@@ -394,6 +394,7 @@ function scheduleTaskForRootDuringMicrotask(
 
   // Check if any lanes are being starved by other work. If so, mark them as
   // expired so we know to work on those next.
+  // 检查是否有任务被“饿”了太久
   markStarvedLanesAsExpired(root, currentTime);
 
   // Determine the next lanes to work on, and their priority.
@@ -403,6 +404,7 @@ function scheduleTaskForRootDuringMicrotask(
   const workInProgressRootRenderLanes = getWorkInProgressRootRenderLanes();
   const rootHasPendingCommit =
     root.cancelPendingCommit !== null || root.timeoutHandle !== noTimeout;
+  // 再次获取下一个要执行的 Lane
   const nextLanes =
     enableYieldingBeforePassive && root === rootWithPendingPassiveEffects
       ? // This will schedule the callback at the priority of the lane but we used to
@@ -413,7 +415,7 @@ function scheduleTaskForRootDuringMicrotask(
       : getNextLanes(
           root,
           root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
-          rootHasPendingCommit,
+          rootHasPendingCommit
         );
 
   const existingCallbackNode = root.callbackNode;
@@ -499,7 +501,7 @@ function scheduleTaskForRootDuringMicrotask(
 
     const newCallbackNode = scheduleCallback(
       schedulerPriorityLevel,
-      performWorkOnRootViaSchedulerTask.bind(null, root),
+      performWorkOnRootViaSchedulerTask.bind(null, root)
     );
 
     root.callbackPriority = newCallbackPriority;
@@ -512,7 +514,7 @@ type RenderTaskFn = (didTimeout: boolean) => RenderTaskFn | null;
 
 function performWorkOnRootViaSchedulerTask(
   root: FiberRoot,
-  didTimeout: boolean,
+  didTimeout: boolean
 ): RenderTaskFn | null {
   // This is the entry point for concurrent tasks scheduled via Scheduler (and
   // postTask, in the future).
@@ -575,7 +577,7 @@ function performWorkOnRootViaSchedulerTask(
   const lanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
-    rootHasPendingCommit,
+    rootHasPendingCommit
   );
   if (lanes === NoLanes) {
     // No more work on this root.
@@ -625,7 +627,7 @@ const fakeActCallbackNode = {};
 
 function scheduleCallback(
   priorityLevel: PriorityLevel,
-  callback: RenderTaskFn,
+  callback: RenderTaskFn
 ) {
   if (__DEV__ && ReactSharedInternals.actQueue !== null) {
     // Special case: We're inside an `act` scope (a testing utility).
@@ -658,6 +660,7 @@ function scheduleImmediateRootScheduleTask() {
       processRootScheduleInMicrotask();
       return null;
     });
+    
   }
 
   // TODO: Can we land supportsMicrotasks? Which environments don't support it?
@@ -679,7 +682,7 @@ function scheduleImmediateRootScheduleTask() {
         // the behavior isn't completely correct.
         Scheduler_scheduleCallback(
           ImmediateSchedulerPriority,
-          processRootScheduleInImmediateTask,
+          processRootScheduleInImmediateTask
         );
         return;
       }
@@ -689,7 +692,7 @@ function scheduleImmediateRootScheduleTask() {
     // If microtasks are not supported, use Scheduler.
     Scheduler_scheduleCallback(
       ImmediateSchedulerPriority,
-      processRootScheduleInImmediateTask,
+      processRootScheduleInImmediateTask
     );
   }
 }
@@ -698,7 +701,7 @@ export function requestTransitionLane(
   // This argument isn't used, it's only here to encourage the caller to
   // check that it's inside a transition before calling this function.
   // TODO: Make this non-nullable. Requires a tweak to useOptimistic.
-  transition: Transition | null,
+  transition: Transition | null
 ): Lane {
   // The algorithm for assigning an update to a lane should be stable for all
   // updates at the same priority within the same event. To do this, the
