@@ -823,6 +823,7 @@ export function requestUpdateLane(fiber: Fiber): Lane {
   //  处理 Transition 更新
   // React 的 startTransition API 允许将更新标记为“过渡性”的，这些更新优先级较低，可被中断。
   const transition = requestCurrentTransition();
+  // 检查是否在 Transition 中
   if (transition !== null) {
     if (enableGestureTransition) {
       if (transition.gesture) {
@@ -844,7 +845,7 @@ export function requestUpdateLane(fiber: Fiber): Lane {
     return requestTransitionLane(transition);
   }
 
-  // 默认情况：根据事件优先级确定 Lane\
+  // 默认情况：根据事件优先级确定 Lane
   // resolveUpdatePriority() => DiscreteEventPriority/ContinuousEventPriority/DefaultEventPriority等
   // eventPriorityToLane => 将事件优先级映射到具体的 Lane
   return eventPriorityToLane(resolveUpdatePriority());
@@ -928,6 +929,7 @@ export function peekDeferredLane(): Lane {
   return workInProgressDeferredLane;
 }
 
+// TODO:连接 Reconciler 与 Scheduler
 export function scheduleUpdateOnFiber(
   root: FiberRoot,
   fiber: Fiber,
@@ -949,6 +951,7 @@ export function scheduleUpdateOnFiber(
   // finish loading.
   if (
     // Suspended render phase
+    // 检查根节点是否因延迟而挂起
     (root === workInProgressRoot &&
       (workInProgressSuspendedReason === SuspendedOnData ||
         workInProgressSuspendedReason === SuspendedOnAction)) ||
@@ -957,6 +960,7 @@ export function scheduleUpdateOnFiber(
   ) {
     // The incoming update might unblock the current render. Interrupt the
     // current attempt and restart from the top.
+    // 中断当前渲染并切换到新更新
     prepareFreshStack(root, NoLanes);
     const didAttemptEntireTree = false;
     markRootSuspended(
@@ -968,8 +972,10 @@ export function scheduleUpdateOnFiber(
   }
 
   // Mark that the root has a pending update.
+  // 标记根节点已更新
   markRootUpdated(root, lane);
 
+  //检查是否在渲染阶段
   if (
     (executionContext & RenderContext) !== NoContext &&
     root === workInProgressRoot
@@ -982,6 +988,7 @@ export function scheduleUpdateOnFiber(
     warnAboutRenderPhaseUpdatesInDEV(fiber);
 
     // Track lanes that were updated during the render phase
+    //在渲染阶段收到更新，标记渲染阶段更新车道
     workInProgressRootRenderPhaseUpdatedLanes = mergeLanes(
       workInProgressRootRenderPhaseUpdatedLanes,
       lane
@@ -989,6 +996,7 @@ export function scheduleUpdateOnFiber(
   } else {
     // This is a normal update, scheduled from outside the render phase. For
     // example, during an input event.
+    // 检查根节点是否因延迟而挂起
     if (enableUpdaterTracking) {
       if (isDevToolsPresent) {
         addFiberToLanesMap(root, fiber, lane);
@@ -1035,6 +1043,8 @@ export function scheduleUpdateOnFiber(
     }
 
     ensureRootIsScheduled(root);
+    // 如果满足条件，立即刷新同步工作
+
     if (
       lane === SyncLane &&
       executionContext === NoContext &&
@@ -1694,6 +1704,7 @@ function isRenderConsistentWithExternalStores(finishedWork: Fiber): boolean {
 // avoid this problem. Perhaps all the root-marking functions should move into
 // the work loop.
 
+// 标记根节点已更新，更新相关车道信息
 function markRootUpdated(root: FiberRoot, updatedLanes: Lanes) {
   _markRootUpdated(root, updatedLanes);
 
@@ -1943,7 +1954,7 @@ function finalizeRender(lanes: Lanes, finalizationTime: number): void {
     }
   }
 }
-
+// 准备新的工作栈，重置渲染状态
 function prepareFreshStack(root: FiberRoot, lanes: Lanes): Fiber {
   if (enableProfilerTimer && enableComponentPerformanceTrack) {
     // The order of tracks within a group are determined by the earliest start time.

@@ -9,7 +9,7 @@
 
 /* eslint-disable no-var */
 
-import type {PriorityLevel} from '../SchedulerPriorities';
+import type { PriorityLevel } from "../SchedulerPriorities";
 
 import {
   enableProfiling,
@@ -19,9 +19,9 @@ import {
   normalPriorityTimeout,
   enableRequestPaint,
   enableAlwaysYieldScheduler,
-} from '../SchedulerFeatureFlags';
+} from "../SchedulerFeatureFlags";
 
-import {push, pop, peek} from '../SchedulerMinHeap';
+import { push, pop, peek } from "../SchedulerMinHeap";
 
 // TODO: Use symbols?
 import {
@@ -30,7 +30,7 @@ import {
   NormalPriority,
   LowPriority,
   IdlePriority,
-} from '../SchedulerPriorities';
+} from "../SchedulerPriorities";
 import {
   markTaskRun,
   markTaskYield,
@@ -42,9 +42,9 @@ import {
   markTaskStart,
   stopLoggingProfilingEvents,
   startLoggingProfilingEvents,
-} from '../SchedulerProfiling';
+} from "../SchedulerProfiling";
 
-export type Callback = boolean => ?Callback;
+export type Callback = (boolean) => ?Callback;
 
 export opaque type Task = {
   id: number,
@@ -59,7 +59,7 @@ export opaque type Task = {
 let getCurrentTime: () => number | DOMHighResTimeStamp;
 const hasPerformanceNow =
   // $FlowFixMe[method-unbinding]
-  typeof performance === 'object' && typeof performance.now === 'function';
+  typeof performance === "object" && typeof performance.now === "function";
 
 if (hasPerformanceNow) {
   const localPerformance = performance;
@@ -94,11 +94,11 @@ var isHostTimeoutScheduled = false;
 var needsPaint = false;
 
 // Capture local references to native APIs, in case a polyfill overrides them.
-const localSetTimeout = typeof setTimeout === 'function' ? setTimeout : null;
+const localSetTimeout = typeof setTimeout === "function" ? setTimeout : null;
 const localClearTimeout =
-  typeof clearTimeout === 'function' ? clearTimeout : null;
+  typeof clearTimeout === "function" ? clearTimeout : null;
 const localSetImmediate =
-  typeof setImmediate !== 'undefined' ? setImmediate : null; // IE and Node.js + jsdom
+  typeof setImmediate !== "undefined" ? setImmediate : null; // IE and Node.js + jsdom
 
 function advanceTimers(currentTime: number) {
   // Check for tasks that are no longer delayed and add them to the queue.
@@ -159,6 +159,7 @@ function flushWork(initialTime: number) {
   try {
     if (enableProfiling) {
       try {
+        //workLoop
         return workLoop(initialTime);
       } catch (error) {
         if (currentTask !== null) {
@@ -191,6 +192,7 @@ function workLoop(initialTime: number) {
   currentTask = peek(taskQueue);
   while (currentTask !== null) {
     if (!enableAlwaysYieldScheduler) {
+      // 是否让出主线程
       if (currentTask.expirationTime > currentTime && shouldYieldToHost()) {
         // This currentTask hasn't expired, and we've reached the deadline.
         break;
@@ -198,7 +200,7 @@ function workLoop(initialTime: number) {
     }
     // $FlowFixMe[incompatible-use] found when upgrading Flow
     const callback = currentTask.callback;
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       // $FlowFixMe[incompatible-use] found when upgrading Flow
       currentTask.callback = null;
       // $FlowFixMe[incompatible-use] found when upgrading Flow
@@ -211,7 +213,7 @@ function workLoop(initialTime: number) {
       }
       const continuationCallback = callback(didUserCallbackTimeout);
       currentTime = getCurrentTime();
-      if (typeof continuationCallback === 'function') {
+      if (typeof continuationCallback === "function") {
         // If a continuation is returned, immediately yield to the main thread
         // regardless of how much time is left in the current time slice.
         // $FlowFixMe[incompatible-use] found when upgrading Flow
@@ -259,7 +261,7 @@ function workLoop(initialTime: number) {
 
 function unstable_runWithPriority<T>(
   priorityLevel: PriorityLevel,
-  eventHandler: () => T,
+  eventHandler: () => T
 ): T {
   switch (priorityLevel) {
     case ImmediatePriority:
@@ -327,14 +329,18 @@ function unstable_wrapCallback<T: (...Array<mixed>) => mixed>(callback: T): T {
 function unstable_scheduleCallback(
   priorityLevel: PriorityLevel,
   callback: Callback,
-  options?: {delay: number},
+  options?: { delay: number }
 ): Task {
+  // 1. 获取当前时间
   var currentTime = getCurrentTime();
 
+  // 2. 计算任务的开始时间 (startTime)
+  // 如果 options 中指定了 delay，则 startTime = currentTime + delay
+  // 否则，startTime = currentTime (立即开始)
   var startTime;
-  if (typeof options === 'object' && options !== null) {
+  if (typeof options === "object" && options !== null) {
     var delay = options.delay;
-    if (typeof delay === 'number' && delay > 0) {
+    if (typeof delay === "number" && delay > 0) {
       startTime = currentTime + delay;
     } else {
       startTime = currentTime;
@@ -342,7 +348,9 @@ function unstable_scheduleCallback(
   } else {
     startTime = currentTime;
   }
-
+  // 3. 根据优先级计算任务的超时时间 (timeout)
+  // 不同优先级对应不同的超时时长，例如 ImmediatePriority 的超时时间很短或没有，
+  // 而 LowPriority 的超时时间会比较长。
   var timeout;
   switch (priorityLevel) {
     case ImmediatePriority:
@@ -368,22 +376,32 @@ function unstable_scheduleCallback(
       break;
   }
 
+  // 4. 计算任务的过期时间 (expirationTime)
   var expirationTime = startTime + timeout;
 
+  // 5. 创建任务对象 (newTask)
+  // 任务对象至少包含: id, callback, priorityLevel, startTime, expirationTime, sortIndex (通常是 expirationTime 或 startTime)
   var newTask: Task = {
-    id: taskIdCounter++,
-    callback,
-    priorityLevel,
-    startTime,
-    expirationTime,
-    sortIndex: -1,
+    id: taskIdCounter++, // 唯一的任务 ID
+    callback, // 要执行的回调函数
+    priorityLevel, // 任务的优先级
+    startTime, // 任务的计划开始时间
+    expirationTime, // 任务的过期时间
+    sortIndex: -1, // 用于在队列中排序，对于 timerQueue 是 startTime，对于 taskQueue 是 expirationTime
   };
   if (enableProfiling) {
     newTask.isQueued = false;
   }
-
+  // 6. 将任务加入队列
   if (startTime > currentTime) {
     // This is a delayed task.
+    //   这是一个延迟任务 (delayed task)
+    //   设置 newTask.sortIndex = startTime
+    //   将 newTask 加入 timerQueue (一个按 sortIndex 排序的最小堆)
+    //   如果 newTask 成为了 timerQueue 中最早开始的任务 (即堆顶任务)，
+    //   并且当前没有正在等待的 hostTimeout，则调用 requestHostTimeout(handleTimeout, startTime - currentTime)
+    //   来安排一个 setTimeout，在 startTime 时刻执行 handleTimeout。
+    //   handleTimeout 的作用是将到期的延迟任务从 timerQueue 移动到 taskQueue。
     newTask.sortIndex = startTime;
     push(timerQueue, newTask);
     if (peek(taskQueue) === null && newTask === peek(timerQueue)) {
@@ -398,6 +416,12 @@ function unstable_scheduleCallback(
       requestHostTimeout(handleTimeout, startTime - currentTime);
     }
   } else {
+    // 这是一个立即任务 (immediate task) 或已到期的延迟任务
+    // - 设置 newTask.sortIndex = expirationTime
+    // - 将 newTask 加入 taskQueue (一个按 expirationTime 排序的最小堆)
+    // - 如果当前没有正在进行的调度工作 (isPerformingWork 为 false) 且没有回调被请求 (isHostCallbackScheduled 为 false)，
+    //   则调用 requestHostCallback(flushWork) 来请求浏览器在下一个宏任务中执行 flushWork。
+    //   flushWork 会开始处理 taskQueue 中的任务。
     newTask.sortIndex = expirationTime;
     push(taskQueue, newTask);
     if (enableProfiling) {
@@ -447,6 +471,7 @@ let startTime = -1;
 function shouldYieldToHost(): boolean {
   if (!enableAlwaysYieldScheduler && enableRequestPaint && needsPaint) {
     // Yield now.
+    // 应该让步
     return true;
   }
   const timeElapsed = getCurrentTime() - startTime;
@@ -456,6 +481,7 @@ function shouldYieldToHost(): boolean {
     return false;
   }
   // Yield now.
+  // 应该让步
   return true;
 }
 
@@ -468,9 +494,9 @@ function requestPaint() {
 function forceFrameRate(fps: number) {
   if (fps < 0 || fps > 125) {
     // Using console['error'] to evade Babel and ESLint
-    console['error'](
-      'forceFrameRate takes a positive int between 0 and 125, ' +
-        'forcing frame rates higher than 125 fps is not supported',
+    console["error"](
+      "forceFrameRate takes a positive int between 0 and 125, " +
+        "forcing frame rates higher than 125 fps is not supported"
     );
     return;
   }
@@ -500,6 +526,7 @@ const performWorkUntilDeadline = () => {
     // remain true, and we'll continue the work loop.
     let hasMoreWork = true;
     try {
+      // 冲洗工作
       hasMoreWork = flushWork(currentTime);
     } finally {
       if (hasMoreWork) {
@@ -514,7 +541,8 @@ const performWorkUntilDeadline = () => {
 };
 
 let schedulePerformWorkUntilDeadline;
-if (typeof localSetImmediate === 'function') {
+if (typeof localSetImmediate === "function") {
+  //如果浏览器实现了SetImmediate，最好使用它。
   // Node.js and old IE.
   // There's a few reasons for why we prefer setImmediate.
   //
@@ -526,26 +554,30 @@ if (typeof localSetImmediate === 'function') {
   // But also, it runs earlier which is the semantic we want.
   // If other browsers ever implement it, it's better to use it.
   // Although both of these would be inferior to native scheduling.
+  // setImmediate
   schedulePerformWorkUntilDeadline = () => {
     localSetImmediate(performWorkUntilDeadline);
   };
-} else if (typeof MessageChannel !== 'undefined') {
+} else if (typeof MessageChannel !== "undefined") {
+  //其次使用 MessageChannel
   // DOM and Worker environments.
   // We prefer MessageChannel because of the 4ms setTimeout clamping.
   const channel = new MessageChannel();
   const port = channel.port2;
+  // 利用 MessageChannel 在浏览器的宏任务队列中安排一个 performWorkUntilDeadline 回调。
   channel.port1.onmessage = performWorkUntilDeadline;
   schedulePerformWorkUntilDeadline = () => {
     port.postMessage(null);
   };
 } else {
+  //最后使用SetTimeout
   // We should only fallback here in non-browser environments.
   schedulePerformWorkUntilDeadline = () => {
     // $FlowFixMe[not-a-function] nullable value
     localSetTimeout(performWorkUntilDeadline, 0);
   };
 }
-
+// 一个新任务被添加到 taskQueue 且当前没有正在进行的调度时，会调用 requestHostCallback。
 function requestHostCallback() {
   if (!isMessageLoopRunning) {
     isMessageLoopRunning = true;
@@ -555,7 +587,7 @@ function requestHostCallback() {
 
 function requestHostTimeout(
   callback: (currentTime: number) => void,
-  ms: number,
+  ms: number
 ) {
   // $FlowFixMe[not-a-function] nullable value
   taskTimeoutID = localSetTimeout(() => {

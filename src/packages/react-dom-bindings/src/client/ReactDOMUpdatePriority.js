@@ -32,8 +32,9 @@ export function getCurrentUpdatePriority(): EventPriority {
   return ReactDOMSharedInternals.p; /* currentUpdatePriority */
 }
 
-// 解析当前更新的优先级
+//TODO:解析当前更新的优先级
 export function resolveUpdatePriority(): EventPriority {
+  //首次渲染时 是 NoEventPriority:0
   const updatePriority = ReactDOMSharedInternals.p; /* currentUpdatePriority */
   if (updatePriority !== NoEventPriority) {
     return updatePriority;

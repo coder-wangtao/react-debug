@@ -7,6 +7,7 @@
  * @flow strict
  */
 
+//最小堆
 type Heap<T: Node> = Array<T>;
 type Node = {
   id: number,

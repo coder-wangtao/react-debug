@@ -128,6 +128,7 @@ import {
   peekEntangledActionThenable,
 } from "./ReactFiberAsyncAction";
 
+// React 19中的 Update 类型定义
 export type Update<State> = {
   lane: Lane,
 
@@ -207,6 +208,7 @@ export function cloneUpdateQueue<State>(
   }
 }
 
+//TODO: update入队
 export function createUpdate(lane: Lane): Update<mixed> {
   const update: Update<mixed> = {
     lane,
@@ -220,6 +222,7 @@ export function createUpdate(lane: Lane): Update<mixed> {
   return update;
 }
 
+//TODO:入队 Update（环形链表结构）
 export function enqueueUpdate<State>(
   fiber: Fiber,
   update: Update<State>,
@@ -253,14 +256,18 @@ export function enqueueUpdate<State>(
   if (isUnsafeClassRenderPhaseUpdate(fiber)) {
     // This is an unsafe render phase update. Add directly to the update
     // queue so we can process it immediately during the current render.
+    // 构建环形链表
     const pending = sharedQueue.pending;
     if (pending === null) {
       // This is the first update. Create a circular list.
+      // 第一个更新，指向自己形成环
       update.next = update;
     } else {
+      // 插入到环形链表中
       update.next = pending.next;
       pending.next = update;
     }
+    // 更新 pending 指针
     sharedQueue.pending = update;
 
     // Update the childLanes even though we're most likely already rendering

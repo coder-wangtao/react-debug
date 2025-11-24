@@ -832,7 +832,9 @@ export function createLaneMap<T>(initial: T): LaneMap<T> {
 }
 
 export function markRootUpdated(root: FiberRoot, updateLane: Lane) {
+  // 将更新车道添加到待处理车道
   root.pendingLanes |= updateLane;
+  // 标记可能需要显示加载指示器的车道
   if (enableDefaultTransitionIndicator) {
     // Mark that this lane might need a loading indicator to be shown.
     root.indicatorLanes |= updateLane & TransitionLanes;
@@ -850,6 +852,7 @@ export function markRootUpdated(root: FiberRoot, updateLane: Lane) {
   // We don't do this if the incoming update is idle, because we never process
   // idle updates until after all the regular updates have finished; there's no
   // way it could unblock a transition.
+  // 清除挂起的车道，因为新更新可能解除阻塞
   if (updateLane !== IdleLane) {
     root.suspendedLanes = NoLanes;
     root.pingedLanes = NoLanes;

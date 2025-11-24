@@ -373,6 +373,7 @@ export function updateContainer(
   callback: ?Function
 ): Lane {
   const current = container.current;
+  //首次渲染 DefaultEventPriority
   const lane = requestUpdateLane(current);
   updateContainerImpl(
     current,
@@ -446,6 +447,7 @@ function updateContainerImpl(
     }
   }
 
+  //创建一个update
   const update = createUpdate(lane);
   // Caution: React DevTools currently depends on this property
   // being called "element".
