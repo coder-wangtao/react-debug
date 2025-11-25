@@ -575,7 +575,6 @@ export function markStarvedLanesAsExpired(
   while (lanes > 0) {
     const index = pickArbitraryLaneIndex(lanes);
     const lane = 1 << index;
-
     const expirationTime = expirationTimes[index];
     if (expirationTime === NoTimestamp) {
       // Found a pending lane with no expiration time. If it's not suspended, or

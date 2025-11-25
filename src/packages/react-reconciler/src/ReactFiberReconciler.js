@@ -470,6 +470,7 @@ function updateContainerImpl(
   const root = enqueueUpdate(rootFiber, update, lane);
   if (root !== null) {
     startUpdateTimerByLane(lane, "root.render()", null);
+    //TODO:再Fiber上调度更新
     scheduleUpdateOnFiber(root, rootFiber, lane);
     entangleTransitions(root, rootFiber, lane);
   }

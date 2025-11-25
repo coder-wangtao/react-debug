@@ -246,7 +246,7 @@ function flushSyncWorkAcrossRoots_impl(
   } while (didPerformSomeWork);
   isFlushingWork = false;
 }
-
+//Root 立即开始调度
 function processRootScheduleInImmediateTask() {
   if (enableProfilerTimer && enableComponentPerformanceTrack) {
     // Track the currently executing event if there is one so we can ignore this
@@ -286,7 +286,6 @@ function processRootScheduleInMicrotask() {
   }
 
   const currentTime = now();
-
   let prev = null;
   let root = firstScheduledRoot;
   while (root !== null) {
@@ -382,6 +381,7 @@ function startDefaultTransitionIndicatorIfNeeded() {
   }
 }
 
+//TODO: 重点
 function scheduleTaskForRootDuringMicrotask(
   root: FiberRoot,
   currentTime: number
@@ -395,7 +395,7 @@ function scheduleTaskForRootDuringMicrotask(
 
   // Check if any lanes are being starved by other work. If so, mark them as
   // expired so we know to work on those next.
-  // 检查是否有任务被“饿”了太久
+  //标记过期的任务是否被饿
   markStarvedLanesAsExpired(root, currentTime);
 
   // Determine the next lanes to work on, and their priority.
@@ -418,7 +418,6 @@ function scheduleTaskForRootDuringMicrotask(
           root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
           rootHasPendingCommit
         );
-
   const existingCallbackNode = root.callbackNode;
   if (
     // Check if there's nothing to work on
@@ -479,8 +478,7 @@ function scheduleTaskForRootDuringMicrotask(
       // Cancel the existing callback. We'll schedule a new one below.
       cancelCallback(existingCallbackNode);
     }
-
-    let schedulerPriorityLevel;
+    let schedulerPriorityLevel; // NormalSchedulerPriority
     switch (lanesToEventPriority(nextLanes)) {
       // Scheduler does have an "ImmediatePriority", but now that we use
       // microtasks for sync work we no longer use that. Any sync work that
@@ -502,6 +500,7 @@ function scheduleTaskForRootDuringMicrotask(
 
     const newCallbackNode = scheduleCallback(
       schedulerPriorityLevel,
+      //TODO:在root上执行工作，通过调度任务
       performWorkOnRootViaSchedulerTask.bind(null, root)
     );
 
@@ -542,7 +541,6 @@ function performWorkOnRootViaSchedulerTask(
     root.callbackPriority = NoLane;
     return null;
   }
-
   // Flush any pending passive effects before deciding which lanes to work on,
   // in case they schedule additional work.
   const originalCallbackNode = root.callbackNode;
@@ -680,6 +678,7 @@ function scheduleImmediateRootScheduleTask() {
         // wrong semantically but it prevents an infinite loop. The bug is
         // Safari's, not ours, so we just do our best to not crash even though
         // the behavior isn't completely correct.
+
         Scheduler_scheduleCallback(
           ImmediateSchedulerPriority,
           processRootScheduleInImmediateTask

@@ -7,27 +7,32 @@
  * @flow
  */
 
-import type {Fiber, FiberRoot} from './ReactInternalTypes';
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 import type {
   UpdateQueue as HookQueue,
   Update as HookUpdate,
-} from './ReactFiberHooks';
+} from "./ReactFiberHooks";
 import type {
   SharedQueue as ClassQueue,
   Update as ClassUpdate,
-} from './ReactFiberClassUpdateQueue';
-import type {Lane, Lanes} from './ReactFiberLane';
-import type {OffscreenInstance} from './ReactFiberOffscreenComponent';
+} from "./ReactFiberClassUpdateQueue";
+import type { Lane, Lanes } from "./ReactFiberLane";
+import type { OffscreenInstance } from "./ReactFiberOffscreenComponent";
 
 import {
   warnAboutUpdateOnNotYetMountedFiberInDEV,
   throwIfInfiniteUpdateLoopDetected,
   getWorkInProgressRoot,
-} from './ReactFiberWorkLoop';
-import {NoLane, NoLanes, mergeLanes, markHiddenUpdate} from './ReactFiberLane';
-import {NoFlags, Placement, Hydrating} from './ReactFiberFlags';
-import {HostRoot, OffscreenComponent} from './ReactWorkTags';
-import {OffscreenVisible} from './ReactFiberOffscreenComponent';
+} from "./ReactFiberWorkLoop";
+import {
+  NoLane,
+  NoLanes,
+  mergeLanes,
+  markHiddenUpdate,
+} from "./ReactFiberLane";
+import { NoFlags, Placement, Hydrating } from "./ReactFiberFlags";
+import { HostRoot, OffscreenComponent } from "./ReactWorkTags";
+import { OffscreenVisible } from "./ReactFiberOffscreenComponent";
 
 export type ConcurrentUpdate = {
   next: ConcurrentUpdate,
@@ -90,7 +95,7 @@ function enqueueUpdate(
   fiber: Fiber,
   queue: ConcurrentQueue | null,
   update: ConcurrentUpdate | null,
-  lane: Lane,
+  lane: Lane
 ) {
   // Don't update the `childLanes` on the return path yet. If we already in
   // the middle of rendering, wait until after it has completed.
@@ -98,13 +103,13 @@ function enqueueUpdate(
   concurrentQueues[concurrentQueuesIndex++] = queue;
   concurrentQueues[concurrentQueuesIndex++] = update;
   concurrentQueues[concurrentQueuesIndex++] = lane;
-
   concurrentlyUpdatedLanes = mergeLanes(concurrentlyUpdatedLanes, lane);
 
   // The fiber's `lane` field is used in some places to check if any work is
   // scheduled, to perform an eager bailout, so we need to update it immediately.
   // TODO: We should probably move this to the "shared" queue instead.
   fiber.lanes = mergeLanes(fiber.lanes, lane);
+
   const alternate = fiber.alternate;
   if (alternate !== null) {
     alternate.lanes = mergeLanes(alternate.lanes, lane);
@@ -115,7 +120,7 @@ export function enqueueConcurrentHookUpdate<S, A>(
   fiber: Fiber,
   queue: HookQueue<S, A>,
   update: HookUpdate<S, A>,
-  lane: Lane,
+  lane: Lane
 ): FiberRoot | null {
   const concurrentQueue: ConcurrentQueue = (queue: any);
   const concurrentUpdate: ConcurrentUpdate = (update: any);
@@ -126,7 +131,7 @@ export function enqueueConcurrentHookUpdate<S, A>(
 export function enqueueConcurrentHookUpdateAndEagerlyBailout<S, A>(
   fiber: Fiber,
   queue: HookQueue<S, A>,
-  update: HookUpdate<S, A>,
+  update: HookUpdate<S, A>
 ): void {
   // This function is used to queue an update that doesn't need a rerender. The
   // only reason we queue it is in case there's a subsequent higher priority
@@ -153,17 +158,17 @@ export function enqueueConcurrentClassUpdate<State>(
   fiber: Fiber,
   queue: ClassQueue<State>,
   update: ClassUpdate<State>,
-  lane: Lane,
+  lane: Lane
 ): FiberRoot | null {
   const concurrentQueue: ConcurrentQueue = (queue: any);
-  const concurrentUpdate: ConcurrentUpdate = (update: any);
+  const concurrentUpdate: ConcurrentUpdate = (update: any); //第一次渲染 有lane、App Element
   enqueueUpdate(fiber, concurrentQueue, concurrentUpdate, lane);
   return getRootForUpdatedFiber(fiber);
 }
 
 export function enqueueConcurrentRenderForLane(
   fiber: Fiber,
-  lane: Lane,
+  lane: Lane
 ): FiberRoot | null {
   enqueueUpdate(fiber, null, null, lane);
   return getRootForUpdatedFiber(fiber);
@@ -173,7 +178,7 @@ export function enqueueConcurrentRenderForLane(
 // compatibility and should always be accompanied by a warning.
 export function unsafe_markUpdateLaneFromFiberToRoot(
   sourceFiber: Fiber,
-  lane: Lane,
+  lane: Lane
 ): FiberRoot | null {
   // NOTE: For Hyrum's Law reasons, if an infinite update loop is detected, it
   // should throw before `markUpdateLaneFromFiberToRoot` is called. But this is
@@ -188,7 +193,7 @@ export function unsafe_markUpdateLaneFromFiberToRoot(
 function markUpdateLaneFromFiberToRoot(
   sourceFiber: Fiber,
   update: ConcurrentUpdate | null,
-  lane: Lane,
+  lane: Lane
 ): null | FiberRoot {
   // Update the source fiber's lanes
   sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane);
@@ -266,6 +271,7 @@ function getRootForUpdatedFiber(sourceFiber: Fiber): FiberRoot | null {
   detectUpdateOnUnmountedFiber(sourceFiber, sourceFiber);
   let node = sourceFiber;
   let parent = node.return;
+
   while (parent !== null) {
     detectUpdateOnUnmountedFiber(sourceFiber, node);
     node = parent;

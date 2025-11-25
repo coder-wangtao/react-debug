@@ -1087,7 +1087,7 @@ export function isUnsafeClassRenderPhaseUpdate(fiber: Fiber): boolean {
   // which special (deprecated) behavior for UNSAFE_componentWillReceive props.
   return (executionContext & RenderContext) !== NoContext;
 }
-
+//TODO: performWorkOnRoot 真正启动 React 协调阶段的入口
 export function performWorkOnRoot(
   root: FiberRoot,
   lanes: Lanes,
@@ -1129,13 +1129,14 @@ export function performWorkOnRoot(
     // TODO: We should consider doing this whenever a sync lane is suspended,
     // even for regular pings.
     checkIfRootIsPrerendering(root, lanes);
-
   let exitStatus: RootExitStatus = shouldTimeSlice
     ? renderRootConcurrent(root, lanes)
-    : renderRootSync(root, lanes, true);
+    : // 执行同步渲染 (Perform Synchronous Render)
+      // 调用 renderRootSync 函数，它会同步地遍历 Fiber 树，执行组件的 render 方法，
+      // 比较新旧 Fiber 节点，并构建 workInProgress 树。这个过程是不可中断的。
+      renderRootSync(root, lanes, true);
 
   let renderWasConcurrent = shouldTimeSlice;
-
   do {
     if (exitStatus === RootInProgress) {
       // Render phase is still in progress.
@@ -1161,6 +1162,7 @@ export function performWorkOnRoot(
       }
       break;
     } else {
+      //TODO: 渲染结束...
       let renderEndTime = 0;
       if (enableProfilerTimer && enableComponentPerformanceTrack) {
         renderEndTime = now();
@@ -1202,6 +1204,8 @@ export function performWorkOnRoot(
         (disableLegacyMode || root.tag !== LegacyRoot) &&
         exitStatus === RootErrored
       ) {
+        // 如果在协调过程中发生致命错误，则重置根节点的状态，并抛出错误。
+        // 这通常意味着 Fiber 树在处理过程中遇到了无法恢复的问题。
         const lanesThatJustErrored = lanes;
         const errorRetryLanes = getLanesToRetrySynchronouslyOnError(
           root,
@@ -2555,18 +2559,25 @@ export function renderHasNotSuspendedYet(): boolean {
 // TODO: Over time, this function and renderRootConcurrent have become more
 // and more similar. Not sure it makes sense to maintain forked paths. Consider
 // unifying them again.
+// 主要职责：以同步、不可中断的方式执行 Fiber 树的协调和渲染工作。
 function renderRootSync(
   root: FiberRoot,
   lanes: Lanes,
   shouldYieldForPrerendering: boolean
 ): RootExitStatus {
+  // 1. 记录原始的执行上下文，并设置当前为渲染上下文
   const prevExecutionContext = executionContext;
   executionContext |= RenderContext;
+  // 2. 记录原始的调度优先级 (如果适用)
+  //    在同步模式下，通常会提升到最高优先级执行
   const prevDispatcher = pushDispatcher(root.containerInfo);
   const prevAsyncDispatcher = pushAsyncDispatcher();
-
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
+  // 3. 初始化或重置渲染相关的全局/模块级变量
+  //    workInProgressRoot: 当前正在处理的 Root Fiber 的副本 (work-in-progress tree 的根)
+  //    workInProgressRootRenderLanes: 当前渲染过程需要处理的 lanes
+  //    workInProgress: 当前正在处理的 Fiber 节点
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
     if (enableUpdaterTracking) {
       if (isDevToolsPresent) {
@@ -2586,6 +2597,9 @@ function renderRootSync(
 
     workInProgressTransitions = getTransitionsForLanes(root, lanes);
     prepareFreshStack(root, lanes);
+    // workInProgressRoot = root;
+    // workInProgressRootRenderLanes = lanes;
+    // workInProgress = createWorkInProgress(root.current, null);
   }
 
   if (enableSchedulingProfiler) {
@@ -2657,6 +2671,7 @@ function renderRootSync(
           }
         }
       }
+      // 核心的同步工作循环
       workLoopSync();
       exitStatus = workInProgressRootExitStatus;
       break;
@@ -2710,8 +2725,9 @@ function workLoopSync() {
     performUnitOfWork(workInProgress);
   }
 }
-
+// 主要职责：以并发模式执行 Fiber 树的协调和渲染工作，允许任务中断和恢复。
 function renderRootConcurrent(root: FiberRoot, lanes: Lanes): RootExitStatus {
+  // 1. 设置执行上下文为 RenderContext
   const prevExecutionContext = executionContext;
   executionContext |= RenderContext;
   const prevDispatcher = pushDispatcher(root.containerInfo);
@@ -2719,6 +2735,7 @@ function renderRootConcurrent(root: FiberRoot, lanes: Lanes): RootExitStatus {
 
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
+  // 2. 准备工作栈 (Work-in-progress Stack)
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
     if (enableUpdaterTracking) {
       if (isDevToolsPresent) {
@@ -2949,6 +2966,7 @@ function renderRootConcurrent(root: FiberRoot, lanes: Lanes): RootExitStatus {
       } else if (enableThrottledScheduling) {
         workLoopConcurrent(includesNonIdleWork(lanes));
       } else {
+        // 4.2 执行核心工作循环 (workLoopConcurrentByScheduler)
         workLoopConcurrentByScheduler();
       }
       break;
@@ -3004,6 +3022,7 @@ function workLoopConcurrent(nonIdle: boolean) {
   }
 }
 
+// TODO: 可中断
 /** @noinline */
 function workLoopConcurrentByScheduler() {
   // Perform work until Scheduler asks us to yield

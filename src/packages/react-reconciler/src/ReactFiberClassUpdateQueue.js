@@ -256,11 +256,9 @@ export function enqueueUpdate<State>(
   if (isUnsafeClassRenderPhaseUpdate(fiber)) {
     // This is an unsafe render phase update. Add directly to the update
     // queue so we can process it immediately during the current render.
-    // 构建环形链表
     const pending = sharedQueue.pending;
     if (pending === null) {
       // This is the first update. Create a circular list.
-      // 第一个更新，指向自己形成环
       update.next = update;
     } else {
       // 插入到环形链表中

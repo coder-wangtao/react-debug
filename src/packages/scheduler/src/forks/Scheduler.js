@@ -333,7 +333,6 @@ function unstable_scheduleCallback(
 ): Task {
   // 1. 获取当前时间
   var currentTime = getCurrentTime();
-
   // 2. 计算任务的开始时间 (startTime)
   // 如果 options 中指定了 delay，则 startTime = currentTime + delay
   // 否则，startTime = currentTime (立即开始)
@@ -389,6 +388,7 @@ function unstable_scheduleCallback(
     expirationTime, // 任务的过期时间
     sortIndex: -1, // 用于在队列中排序，对于 timerQueue 是 startTime，对于 taskQueue 是 expirationTime
   };
+
   if (enableProfiling) {
     newTask.isQueued = false;
   }
