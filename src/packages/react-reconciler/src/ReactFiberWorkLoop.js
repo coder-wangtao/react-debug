@@ -3578,7 +3578,7 @@ function commitRoot(
     }
     remainingLanes &= ~GestureLane;
   }
-
+  // 标记 Root 完成状态，重置 workInProgressRoot 等
   markRootFinished(
     root,
     lanes,
@@ -3608,6 +3608,7 @@ function commitRoot(
   // because workInProgressX might have changed between
   // the previous render and commit if we throttle the commit
   // with setTimeout
+  // 将 finishedWork 赋值给 pendingFinishedWork，用于后续处理
   pendingFinishedWork = finishedWork;
   pendingEffectsRoot = root;
   pendingEffectsLanes = lanes;
@@ -3657,6 +3658,9 @@ function commitRoot(
   } else {
     passiveSubtreeMask = PassiveMask;
   }
+
+  // 如果启用了 Passive Effects，并且 finishedWork 上有 PassiveMask 副作用标记，
+  // 则调度一个回调来异步执行 Passive Effects。
   if (
     // If this subtree rendered with profiling this commit, we need to visit it to log it.
     (enableProfilerTimer &&
@@ -3741,6 +3745,11 @@ function commitRoot(
       // The first phase a "before mutation" phase. We use this phase to read the
       // state of the host tree right before we mutate it. This is where
       // getSnapshotBeforeUpdate is called.
+      // ** 阶段1: Before Mutation Effects **
+      // -----------------------------------
+      // 在实际 DOM 变更之前执行，主要用于读取 DOM 状态，
+      // 例如执行类组件的 getSnapshotBeforeUpdate。
+      // 也处理与 View Transitions 相关的准备工作。
       commitBeforeMutationEffects(root, finishedWork, lanes);
     } finally {
       // Reset the priority to the previous non-sync value.
@@ -3899,6 +3908,10 @@ function flushMutationEffects(): void {
     executionContext |= CommitContext;
     try {
       // The next phase is the mutation phase, where we mutate the host tree.
+      // ** 阶段2: Mutation Effects **
+      // ---------------------------
+      // 执行实际的 DOM 插入、更新、删除操作。
+      // 这个阶段会遍历 Fiber 树，根据 flags 执行对应的 DOM API 调用。
       commitMutationEffects(root, finishedWork, lanes);
 
       if (enableCreateEventHandleAPI) {
@@ -3919,11 +3932,18 @@ function flushMutationEffects(): void {
   // the mutation phase, so that the previous tree is still current during
   // componentWillUnmount, but before the layout phase, so that the finished
   // work is current during componentDidMount/Update.
+  // 将 current 指针指向 finishedWork，完成 Fiber 树的切换
   root.current = finishedWork;
   pendingEffectsStatus = PENDING_LAYOUT_PHASE;
 }
 
 function flushLayoutEffects(): void {
+  // ** 阶段3: Layout Effects **
+  // -------------------------
+  // 在 DOM 变更之后，浏览器绘制之前同步执行。
+  // 主要用于执行 useLayoutEffect Hook 的回调、类组件的 componentDidMount/Update。
+  // 也处理 ref 的附加和分离。
+
   if (pendingEffectsStatus !== PENDING_LAYOUT_PHASE) {
     return;
   }
@@ -4495,6 +4515,7 @@ export function flushPendingEffects(): boolean {
 }
 
 function flushPassiveEffects(): boolean {
+  //Passive Effects: 这是 React 用于异步执行副作用的阶段。
   if (pendingEffectsStatus !== PENDING_PASSIVE_PHASE) {
     return false;
   }
