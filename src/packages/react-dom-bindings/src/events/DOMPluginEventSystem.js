@@ -279,6 +279,7 @@ function processDispatchQueueItemsInOrder(
   let previousInstance;
   if (inCapturePhase) {
     //捕获阶段
+    // 如果是捕获阶段，就从后往前执行
     for (let i = dispatchListeners.length - 1; i >= 0; i--) {
       const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {
@@ -299,6 +300,7 @@ function processDispatchQueueItemsInOrder(
     }
   } else {
     //冒泡阶段
+    // 如果是冒泡阶段，就从前往后执行
     for (let i = 0; i < dispatchListeners.length; i++) {
       const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {

@@ -9,6 +9,9 @@ function App() {
         onClick={() => {
           setShowButton(!showButton);
         }}
+        onClickCapture={() => {
+          console.log("onClickCapture");
+        }}
       >
         显示按钮
       </button>

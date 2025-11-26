@@ -17,16 +17,16 @@ import type {
   DevToolsBackend,
   DevToolsHookSettings,
   ProfilingSettings,
-} from './backend/types';
+} from "./backend/types";
 
 import {
   FIREFOX_CONSOLE_DIMMING_COLOR,
   ANSI_STYLE_DIMMING_TEMPLATE,
   ANSI_STYLE_DIMMING_TEMPLATE_WITH_COMPONENT_STACK,
-} from 'react-devtools-shared/src/constants';
-import attachRenderer from './attachRenderer';
-import formatConsoleArguments from 'react-devtools-shared/src/backend/utils/formatConsoleArguments';
-import formatWithStyles from 'react-devtools-shared/src/backend/utils/formatWithStyles';
+} from "react-devtools-shared/src/constants";
+import attachRenderer from "./attachRenderer";
+import formatConsoleArguments from "react-devtools-shared/src/backend/utils/formatConsoleArguments";
+import formatWithStyles from "react-devtools-shared/src/backend/utils/formatWithStyles";
 
 // React's custom built component stack strings match "\s{4}in"
 // Chrome's prefix matches "\s{4}at"
@@ -45,7 +45,7 @@ function isStringComponentStack(text: string): boolean {
 // strip them to for the comparison.
 const frameDiffs = / \(\<anonymous\>\)$|\@unknown\:0\:0$|\(|\)|\[|\]/gm;
 function areStackTracesEqual(a: string, b: string): boolean {
-  return a.replace(frameDiffs, '') === b.replace(frameDiffs, '');
+  return a.replace(frameDiffs, "") === b.replace(frameDiffs, "");
 }
 
 const targetConsole: Object = console;
@@ -61,26 +61,26 @@ export function installHook(
     | DevToolsHookSettings
     | Promise<DevToolsHookSettings>,
   shouldStartProfilingNow: boolean = false,
-  profilingSettings: ProfilingSettings = defaultProfilingSettings,
+  profilingSettings: ProfilingSettings = defaultProfilingSettings
 ): DevToolsHook | null {
-  if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
+  if (target.hasOwnProperty("__REACT_DEVTOOLS_GLOBAL_HOOK__")) {
     return null;
   }
 
   function detectReactBuildType(renderer: ReactRenderer) {
     try {
-      if (typeof renderer.version === 'string') {
+      if (typeof renderer.version === "string") {
         // React DOM Fiber (16+)
         if (renderer.bundleType > 0) {
           // This is not a production build.
           // We are currently only using 0 (PROD) and 1 (DEV)
           // but might add 2 (PROFILE) in the future.
-          return 'development';
+          return "development";
         }
 
         // React 16 uses flat bundles. If we report the bundle as production
         // version, it means we also minified and envified it ourselves.
-        return 'production';
+        return "production";
         // Note: There is still a risk that the CommonJS entry point has not
         // been envified or uglified. In this case the user would have *both*
         // development and production bundle, but only the prod one would run.
@@ -93,41 +93,41 @@ export function installHook(
       if (renderer.Mount && renderer.Mount._renderNewRootComponent) {
         // React DOM Stack
         const renderRootCode = toString.call(
-          renderer.Mount._renderNewRootComponent,
+          renderer.Mount._renderNewRootComponent
         );
         // Filter out bad results (if that is even possible):
-        if (renderRootCode.indexOf('function') !== 0) {
+        if (renderRootCode.indexOf("function") !== 0) {
           // Hope for the best if we're not sure.
-          return 'production';
+          return "production";
         }
         // Check for React DOM Stack < 15.1.0 in development.
         // If it contains "storedMeasure" call, it's wrapped in ReactPerf (DEV only).
         // This would be true even if it's minified, as method name still matches.
-        if (renderRootCode.indexOf('storedMeasure') !== -1) {
-          return 'development';
+        if (renderRootCode.indexOf("storedMeasure") !== -1) {
+          return "development";
         }
         // For other versions (and configurations) it's not so easy.
         // Let's quickly exclude proper production builds.
         // If it contains a warning message, it's either a DEV build,
         // or an PROD build without proper dead code elimination.
-        if (renderRootCode.indexOf('should be a pure function') !== -1) {
+        if (renderRootCode.indexOf("should be a pure function") !== -1) {
           // Now how do we tell a DEV build from a bad PROD build?
           // If we see NODE_ENV, we're going to assume this is a dev build
           // because most likely it is referring to an empty shim.
-          if (renderRootCode.indexOf('NODE_ENV') !== -1) {
-            return 'development';
+          if (renderRootCode.indexOf("NODE_ENV") !== -1) {
+            return "development";
           }
           // If we see "development", we're dealing with an envified DEV build
           // (such as the official React DEV UMD).
-          if (renderRootCode.indexOf('development') !== -1) {
-            return 'development';
+          if (renderRootCode.indexOf("development") !== -1) {
+            return "development";
           }
           // I've seen process.env.NODE_ENV !== 'production' being smartly
           // replaced by `true` in DEV by Webpack. I don't know how that
           // works but we can safely guard against it because `true` was
           // never used in the function source since it was written.
-          if (renderRootCode.indexOf('true') !== -1) {
-            return 'development';
+          if (renderRootCode.indexOf("true") !== -1) {
+            return "development";
           }
           // By now either it is a production build that has not been minified,
           // or (worse) this is a minified development build using non-standard
@@ -135,16 +135,16 @@ export function installHook(
           // the function argument name is mangled:
           if (
             // 0.13 to 15
-            renderRootCode.indexOf('nextElement') !== -1 ||
+            renderRootCode.indexOf("nextElement") !== -1 ||
             // 0.12
-            renderRootCode.indexOf('nextComponent') !== -1
+            renderRootCode.indexOf("nextComponent") !== -1
           ) {
             // We can't be certain whether this is a development build or not,
             // but it is definitely unminified.
-            return 'unminified';
+            return "unminified";
           } else {
             // This is likely a minified development build.
-            return 'development';
+            return "development";
           }
         }
         // By now we know that it's envified and dead code elimination worked,
@@ -152,15 +152,15 @@ export function installHook(
         // Let's check matches for the first argument name.
         if (
           // 0.13 to 15
-          renderRootCode.indexOf('nextElement') !== -1 ||
+          renderRootCode.indexOf("nextElement") !== -1 ||
           // 0.12
-          renderRootCode.indexOf('nextComponent') !== -1
+          renderRootCode.indexOf("nextComponent") !== -1
         ) {
-          return 'unminified';
+          return "unminified";
         }
         // Seems like we're using the production version.
         // However, the branch above is Stack-only so this is 15 or earlier.
-        return 'outdated';
+        return "outdated";
       }
     } catch (err) {
       // Weird environments may exist.
@@ -168,7 +168,7 @@ export function installHook(
       // because it runs even with closed DevTools.
       // TODO: should we catch errors in all injected code, and not just this part?
     }
-    return 'production';
+    return "production";
   }
 
   function checkDCE(fn: Function) {
@@ -182,7 +182,7 @@ export function installHook(
       // This is a string embedded in the passed function under DEV-only
       // condition. However the function executes only in PROD. Therefore,
       // if we see it, dead code elimination did not work.
-      if (code.indexOf('^_^') > -1) {
+      if (code.indexOf("^_^") > -1) {
         // Remember to report during next injection.
         hasDetectedBadDCE = true;
 
@@ -190,10 +190,10 @@ export function installHook(
         // Not synchronously so that it doesn't break the calling code.
         setTimeout(function () {
           throw new Error(
-            'React is running in production mode, but dead code ' +
-              'elimination has not been applied. Read how to correctly ' +
-              'configure React for production: ' +
-              'https://react.dev/link/perf-use-production-build',
+            "React is running in production mode, but dead code " +
+              "elimination has not been applied. Read how to correctly " +
+              "configure React for production: " +
+              "https://react.dev/link/perf-use-production-build"
           );
         });
       }
@@ -208,10 +208,10 @@ export function installHook(
     renderers.set(id, renderer);
 
     const reactBuildType = hasDetectedBadDCE
-      ? 'deadcode'
+      ? "deadcode"
       : detectReactBuildType(renderer);
 
-    hook.emit('renderer', {
+    hook.emit("renderer", {
       id,
       renderer,
       reactBuildType,
@@ -223,14 +223,14 @@ export function installHook(
       renderer,
       target,
       isProfiling,
-      profilingSettings,
+      profilingSettings
     );
     if (rendererInterface != null) {
       hook.rendererInterfaces.set(id, rendererInterface);
-      hook.emit('renderer-attached', {id, rendererInterface});
+      hook.emit("renderer-attached", { id, rendererInterface });
     } else {
       hook.hasUnsupportedRendererAttached = true;
-      hook.emit('unsupported-renderer-version');
+      hook.emit("unsupported-renderer-version");
     }
 
     return id;
@@ -265,7 +265,7 @@ export function installHook(
 
   function emit(event: string, data: any) {
     if (listeners[event]) {
-      listeners[event].map(fn => fn(data));
+      listeners[event].map((fn) => fn(data));
     }
   }
 
@@ -287,7 +287,7 @@ export function installHook(
   function onCommitFiberRoot(
     rendererID: RendererID,
     root: any,
-    priorityLevel: void | number,
+    priorityLevel: void | number
   ) {
     const mountedRoots = hook.getFiberRoots(rendererID);
     const current = root.current;
@@ -344,10 +344,10 @@ export function installHook(
     // At this point 'error', 'warn', and 'trace' methods are already patched
     // by React DevTools hook to append component stacks and other possible features.
     const consoleMethodsToOverrideForStrictMode = [
-      'group',
-      'groupCollapsed',
-      'info',
-      'log',
+      "group",
+      "groupCollapsed",
+      "info",
+      "log",
     ];
 
     // eslint-disable-next-line no-for-of-loops/no-for-of-loops
@@ -371,12 +371,12 @@ export function installHook(
         // Firefox doesn't support ANSI escape sequences
         if (__IS_FIREFOX__) {
           originalMethod(
-            ...formatWithStyles(args, FIREFOX_CONSOLE_DIMMING_COLOR),
+            ...formatWithStyles(args, FIREFOX_CONSOLE_DIMMING_COLOR)
           );
         } else {
           originalMethod(
             ANSI_STYLE_DIMMING_TEMPLATE,
-            ...formatConsoleArguments(...args),
+            ...formatConsoleArguments(...args)
           );
         }
       };
@@ -389,7 +389,7 @@ export function installHook(
   }
 
   function unpatchConsoleForStrictMode() {
-    unpatchConsoleCallbacks.forEach(callback => callback());
+    unpatchConsoleCallbacks.forEach((callback) => callback());
     unpatchConsoleCallbacks.length = 0;
   }
 
@@ -399,13 +399,13 @@ export function installHook(
   const moduleRanges: Array<[StackFrameString, StackFrameString]> = [];
 
   function getTopStackFrameString(error: Error): StackFrameString | null {
-    const frames = error.stack.split('\n');
+    const frames = error.stack.split("\n");
     const frame = frames.length > 1 ? frames[1] : null;
     return frame;
   }
 
   function getInternalModuleRanges(): Array<
-    [StackFrameString, StackFrameString],
+    [StackFrameString, StackFrameString]
   > {
     return moduleRanges;
   }
@@ -436,9 +436,9 @@ export function installHook(
     }
 
     const consoleMethodsToOverrideForErrorsAndWarnings = [
-      'error',
-      'trace',
-      'warn',
+      "error",
+      "trace",
+      "warn",
     ];
 
     // eslint-disable-next-line no-for-of-loops/no-for-of-loops
@@ -464,26 +464,26 @@ export function installHook(
         if (settings.appendComponentStack) {
           const lastArg = args.length > 0 ? args[args.length - 1] : null;
           alreadyHasComponentStack =
-            typeof lastArg === 'string' && isStringComponentStack(lastArg); // The last argument should be a component stack.
+            typeof lastArg === "string" && isStringComponentStack(lastArg); // The last argument should be a component stack.
         }
 
         const shouldShowInlineWarningsAndErrors =
           settings.showInlineWarningsAndErrors &&
-          (method === 'error' || method === 'warn');
+          (method === "error" || method === "warn");
 
         // Search for the first renderer that has a current Fiber.
         // We don't handle the edge case of stacks for more than one (e.g. interleaved renderers?)
         // eslint-disable-next-line no-for-of-loops/no-for-of-loops
         for (const rendererInterface of hook.rendererInterfaces.values()) {
-          const {onErrorOrWarning, getComponentStack} = rendererInterface;
+          const { onErrorOrWarning, getComponentStack } = rendererInterface;
           try {
             if (shouldShowInlineWarningsAndErrors) {
               // patch() is called by two places: (1) the hook and (2) the renderer backend.
               // The backend is what implements a message queue, so it's the only one that injects onErrorOrWarning.
               if (onErrorOrWarning != null) {
                 onErrorOrWarning(
-                  ((method: any): 'error' | 'warn'),
-                  args.slice(),
+                  ((method: any): "error" | "warn"),
+                  args.slice()
                 );
               }
             }
@@ -497,18 +497,18 @@ export function installHook(
           try {
             if (settings.appendComponentStack && getComponentStack != null) {
               // This needs to be directly in the wrapper so we can pop exactly one frame.
-              const topFrame = Error('react-stack-top-frame');
+              const topFrame = Error("react-stack-top-frame");
               const match = getComponentStack(topFrame);
               if (match !== null) {
-                const {enableOwnerStacks, componentStack} = match;
+                const { enableOwnerStacks, componentStack } = match;
                 // Empty string means we have a match but no component stack.
                 // We don't need to look in other renderers but we also don't add anything.
-                if (componentStack !== '') {
+                if (componentStack !== "") {
                   // Create a fake Error so that when we print it we get native source maps. Every
                   // browser will print the .stack property of the error and then parse it back for source
                   // mapping. Rather than print the internal slot. So it doesn't matter that the internal
                   // slot doesn't line up.
-                  const fakeError = new Error('');
+                  const fakeError = new Error("");
                   // In Chromium, only the stack property is printed but in Firefox the <name>:<message>
                   // gets printed so to make the colon make sense, we name it so we print Stack:
                   // and similarly Safari leave an expandable slot.
@@ -518,12 +518,12 @@ export function installHook(
                     // https://source.chromium.org/chromium/chromium/src/+/main:v8/src/inspector/value-mirror.cc;l=252-311;drc=bdc48d1b1312cc40c00282efb1c9c5f41dcdca9a
                     // It has to start with ^[\w.]*Error\b to trigger stack formatting.
                     fakeError.name = enableOwnerStacks
-                      ? 'Error Stack'
-                      : 'Error Component Stack'; // This gets printed
+                      ? "Error Stack"
+                      : "Error Component Stack"; // This gets printed
                   } else {
                     fakeError.name = enableOwnerStacks
-                      ? 'Stack'
-                      : 'Component Stack'; // This gets printed
+                      ? "Stack"
+                      : "Component Stack"; // This gets printed
                   }
                   // In Chromium, the stack property needs to start with ^[\w.]*Error\b to trigger stack
                   // formatting. Otherwise it is left alone. So we prefix it. Otherwise we just override it
@@ -531,8 +531,8 @@ export function installHook(
                   fakeError.stack =
                     __IS_CHROME__ || __IS_EDGE__ || __IS_NATIVE__
                       ? (enableOwnerStacks
-                          ? 'Error Stack:'
-                          : 'Error Component Stack:') + componentStack
+                          ? "Error Stack:"
+                          : "Error Component Stack:") + componentStack
                       : componentStack;
 
                   if (alreadyHasComponentStack) {
@@ -544,8 +544,8 @@ export function installHook(
                       const firstArg = args[0];
                       if (
                         args.length > 1 &&
-                        typeof firstArg === 'string' &&
-                        firstArg.endsWith('%s')
+                        typeof firstArg === "string" &&
+                        firstArg.endsWith("%s")
                       ) {
                         args[0] = firstArg.slice(0, firstArg.length - 2); // Strip the %s param
                       }
@@ -585,7 +585,7 @@ export function installHook(
           if (__IS_FIREFOX__) {
             let argsWithCSSStyles = formatWithStyles(
               args,
-              FIREFOX_CONSOLE_DIMMING_COLOR,
+              FIREFOX_CONSOLE_DIMMING_COLOR
             );
 
             if (injectedComponentStackAsFakeError) {
@@ -601,7 +601,7 @@ export function installHook(
               injectedComponentStackAsFakeError
                 ? ANSI_STYLE_DIMMING_TEMPLATE_WITH_COMPONENT_STACK
                 : ANSI_STYLE_DIMMING_TEMPLATE,
-              ...formatConsoleArguments(...args),
+              ...formatConsoleArguments(...args)
             );
           }
         } else {
@@ -614,9 +614,9 @@ export function installHook(
   }
 
   // TODO: More meaningful names for "rendererInterfaces" and "renderers".
-  const fiberRoots: {[RendererID]: Set<mixed>} = {};
+  const fiberRoots: { [RendererID]: Set<mixed> } = {};
   const rendererInterfaces = new Map<RendererID, RendererInterface>();
-  const listeners: {[string]: Array<Handler>} = {};
+  const listeners: { [string]: Array<Handler> } = {};
   const renderers = new Map<RendererID, ReactRenderer>();
   const backends = new Map<string, DevToolsBackend>();
 
@@ -671,22 +671,22 @@ export function installHook(
     patchConsoleForErrorsAndWarnings();
   } else {
     Promise.resolve(maybeSettingsOrSettingsPromise)
-      .then(settings => {
+      .then((settings) => {
         hook.settings = settings;
-        hook.emit('settingsInitialized', settings);
+        hook.emit("settingsInitialized", settings);
 
         patchConsoleForErrorsAndWarnings();
       })
       .catch(() => {
         targetConsole.error(
-          "React DevTools failed to get Console Patching settings. Console won't be patched and some console features will not work.",
+          "React DevTools failed to get Console Patching settings. Console won't be patched and some console features will not work."
         );
       });
   }
 
   Object.defineProperty(
     target,
-    '__REACT_DEVTOOLS_GLOBAL_HOOK__',
+    "__REACT_DEVTOOLS_GLOBAL_HOOK__",
     ({
       // This property needs to be configurable for the test environment,
       // else we won't be able to delete and recreate it between tests.
@@ -695,7 +695,7 @@ export function installHook(
       get() {
         return hook;
       },
-    }: Object),
+    }: Object)
   );
 
   return hook;
