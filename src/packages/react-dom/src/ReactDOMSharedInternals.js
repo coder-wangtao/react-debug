@@ -40,7 +40,7 @@ const DefaultDispatcher: HostDispatcher = {
   S /* preinitStyle */: noop,
   M /* preinitModuleScript */: noop,
 };
-
+//TODO: __DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE
 const Internals: ReactDOMInternals = {
   d /* ReactDOMCurrentDispatcher */: DefaultDispatcher,
   p /* currentUpdatePriority */: NoEventPriority,

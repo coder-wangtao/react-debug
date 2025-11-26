@@ -178,7 +178,9 @@ function extractEvents(
       break;
   }
 
+  //事件是先捕获，后冒泡
   const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
+
   if (
     enableCreateEventHandleAPI &&
     eventSystemFlags & IS_EVENT_HANDLE_NON_MANAGED_NODE
@@ -222,8 +224,10 @@ function extractEvents(
       accumulateTargetOnly,
       nativeEvent
     );
+
     if (listeners.length > 0) {
       // Intentionally create event lazily.
+      // react的合成事件
       const event: ReactSyntheticEvent = new SyntheticEventCtor(
         reactName,
         reactEventType,

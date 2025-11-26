@@ -57,12 +57,14 @@ export default function getListener(
     // Work in progress (ex: onload events in incremental mode).
     return null;
   }
+  // 获取 dom上之前设置的属性
   const props = getFiberCurrentPropsFromNode(stateNode);
   if (props === null) {
     // Work in progress.
     return null;
   }
   // $FlowFixMe[invalid-computed-prop]
+  //这就是我们手写的函数了
   const listener = props[registrationName];
   if (shouldPreventMouseEvent(registrationName, inst.type, props)) {
     return null;

@@ -278,6 +278,7 @@ function processDispatchQueueItemsInOrder(
 ): void {
   let previousInstance;
   if (inCapturePhase) {
+    //捕获阶段
     for (let i = dispatchListeners.length - 1; i >= 0; i--) {
       const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {
@@ -297,6 +298,7 @@ function processDispatchQueueItemsInOrder(
       previousInstance = instance;
     }
   } else {
+    //冒泡阶段
     for (let i = 0; i < dispatchListeners.length; i++) {
       const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {
@@ -337,8 +339,14 @@ function dispatchEventsForPlugins(
   targetInst: null | Fiber,
   targetContainer: EventTarget
 ): void {
+  // getEventTarget 函数的作用是拿到原生事件源，
+  // 不同的浏览器事件源不一样，
+  // IE 浏览器是 nativeEvent.srcElement，
+  // 其他浏览器是 nativeEvent.target
+  // event.target
   const nativeEventTarget = getEventTarget(nativeEvent);
   const dispatchQueue: DispatchQueue = [];
+
   extractEvents(
     dispatchQueue,
     domEventName,
@@ -500,7 +508,6 @@ function addTrappedEventListener(
     enableLegacyFBSupport && isDeferredListenerForLegacyFBSupport
       ? (targetContainer: any).ownerDocument
       : targetContainer;
-
   let unsubscribeListener;
   // When legacyFBSupport is enabled, it's for when we
   // want to add a one time event listener to a container.
@@ -536,6 +543,7 @@ function addTrappedEventListener(
         isPassiveListener
       );
     } else {
+      // 增加捕获事件监听
       unsubscribeListener = addEventCaptureListener(
         targetContainer,
         domEventName,
@@ -551,6 +559,7 @@ function addTrappedEventListener(
         isPassiveListener
       );
     } else {
+      // 增加冒泡事件监听
       unsubscribeListener = addEventBubbleListener(
         targetContainer,
         domEventName,
@@ -693,7 +702,10 @@ export function dispatchEventForPluginEventSystem(
       }
     }
   }
-
+  // TODO: only to debugger
+  if (domEventName !== "click") {
+    return;
+  }
   batchedUpdates(() =>
     dispatchEventsForPlugins(
       domEventName,
@@ -716,7 +728,10 @@ function createDispatchListener(
     currentTarget,
   };
 }
-
+// 遍历 Fiber 树，收集捕获和冒泡阶段的事件处理函数
+// 从事件源开始，向上循环遍历父 Fiber
+// 如果当前节点是真实 DOM 节点，就调用 getListener 函数拿到对应的事件函数
+// 如果当前节点不是真实的 DOM 节点，继续向上遍历
 export function accumulateSinglePhaseListeners(
   targetFiber: Fiber | null,
   reactName: string | null,
@@ -771,6 +786,9 @@ export function accumulateSinglePhaseListeners(
         const listener = getListener(instance, reactEventName);
         if (listener != null) {
           listeners.push(
+            // instance:Fiber节点
+            // listener:我们的回调函数
+            // lastHostComponent 最后一个dom Fiber
             createDispatchListener(instance, listener, lastHostComponent)
           );
         }
