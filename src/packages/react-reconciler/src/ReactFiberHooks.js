@@ -192,12 +192,13 @@ if (__DEV__) {
   didWarnAboutUseFormState = new Set<string | null>();
 }
 
+// Hook 对象的类型定义
 export type Hook = {
-  memoizedState: any,
-  baseState: any,
-  baseQueue: Update<any, any> | null,
-  queue: any,
-  next: Hook | null,
+  memoizedState: any, // 存储当前 hook 的状态值或缓存值
+  baseState: any, // 用于计算下一次 state 的基础 state
+  baseQueue: Update<any, any> | null, // 存储跳过的低优先级 update
+  queue: any, // 指向 UpdateQueue 对象，存储待处理的 update
+  next: Hook | null, // 指向下一个 Hook 对象的指针
 };
 
 // The effect "instance" is a shared object that remains the same for the entire

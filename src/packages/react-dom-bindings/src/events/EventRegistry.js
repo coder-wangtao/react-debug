@@ -7,15 +7,15 @@
  * @flow
  */
 
-import type {DOMEventName} from './DOMEventNames';
+import type { DOMEventName } from "./DOMEventNames";
 
-import {enableCreateEventHandleAPI} from 'shared/ReactFeatureFlags';
+import { enableCreateEventHandleAPI } from "shared/ReactFeatureFlags";
 
 export const allNativeEvents: Set<DOMEventName> = new Set();
 
 if (enableCreateEventHandleAPI) {
-  allNativeEvents.add('beforeblur');
-  allNativeEvents.add('afterblur');
+  allNativeEvents.add("beforeblur");
+  allNativeEvents.add("afterblur");
 }
 
 /**
@@ -35,25 +35,27 @@ export const possibleRegistrationNames: {
   [lowerCasedName: string]: string,
 } = __DEV__ ? {} : (null: any);
 // Trust the developer to only use possibleRegistrationNames in __DEV__
-
+//TODO:双阶段事件注册
 export function registerTwoPhaseEvent(
   registrationName: string,
-  dependencies: Array<DOMEventName>,
+  dependencies: Array<DOMEventName>
 ): void {
+  // 注册普通的事件名（如 onClick）
   registerDirectEvent(registrationName, dependencies);
-  registerDirectEvent(registrationName + 'Capture', dependencies);
+  // 注册带 Capture 后缀的事件名（如 onClickCapture）
+  registerDirectEvent(registrationName + "Capture", dependencies);
 }
 
 export function registerDirectEvent(
   registrationName: string,
-  dependencies: Array<DOMEventName>,
+  dependencies: Array<DOMEventName>
 ) {
   if (__DEV__) {
     if (registrationNameDependencies[registrationName]) {
       console.error(
-        'EventRegistry: More than one plugin attempted to publish the same ' +
-          'registration name, `%s`.',
-        registrationName,
+        "EventRegistry: More than one plugin attempted to publish the same " +
+          "registration name, `%s`.",
+        registrationName
       );
     }
   }
@@ -64,7 +66,7 @@ export function registerDirectEvent(
     const lowerCasedName = registrationName.toLowerCase();
     possibleRegistrationNames[lowerCasedName] = registrationName;
 
-    if (registrationName === 'onDoubleClick') {
+    if (registrationName === "onDoubleClick") {
       possibleRegistrationNames.ondblclick = registrationName;
     }
   }

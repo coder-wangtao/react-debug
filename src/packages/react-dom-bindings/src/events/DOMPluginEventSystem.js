@@ -90,6 +90,7 @@ type DispatchEntry = {
 export type DispatchQueue = Array<DispatchEntry>;
 
 // TODO: remove top-level side effect.
+// 插件注册 - 在模块加载时立即执行
 SimpleEventPlugin.registerEvents();
 EnterLeaveEventPlugin.registerEvents();
 ChangeEventPlugin.registerEvents();
@@ -100,13 +101,13 @@ if (enableScrollEndPolyfill) {
 }
 
 function extractEvents(
-  dispatchQueue: DispatchQueue,
-  domEventName: DOMEventName,
-  targetInst: null | Fiber,
-  nativeEvent: AnyNativeEvent,
-  nativeEventTarget: null | EventTarget,
-  eventSystemFlags: EventSystemFlags,
-  targetContainer: EventTarget
+  dispatchQueue: DispatchQueue, //用于收集事件和监听器的队列
+  domEventName: DOMEventName, // 触发的原生 DOM 事件名 (如 'click')
+  targetInst: null | Fiber, // 与原生事件目标最近的 Fiber 实例
+  nativeEvent: AnyNativeEvent, // 原生浏览器事件对象
+  nativeEventTarget: null | EventTarget, // 原生事件的目标 DOM 元素
+  eventSystemFlags: EventSystemFlags, // 事件系统标志 (如是否捕获阶段)
+  targetContainer: EventTarget // 事件发生的根容器
 ) {
   // TODO: we should remove the concept of a "SimpleEventPlugin".
   // This is the basic functionality of the event system. All
@@ -114,6 +115,9 @@ function extractEvents(
   // should probably be inlined somewhere and have its logic
   // be core the to event system. This would potentially allow
   // us to ship builds of React without the polyfilled plugins below.
+
+  // 1. 首先调用 SimpleEventPlugin 的 extractEvents
+  // SimpleEventPlugin 处理大部分简单事件的映射和分发逻辑
   SimpleEventPlugin.extractEvents(
     dispatchQueue,
     domEventName,
@@ -123,6 +127,7 @@ function extractEvents(
     eventSystemFlags,
     targetContainer
   );
+  // 2. 根据 eventSystemFlags 判断是否需要处理其他"polyfill"性质的插件
   const shouldProcessPolyfillPlugins =
     (eventSystemFlags & SHOULD_NOT_PROCESS_POLYFILL_EVENT_PLUGINS) === 0;
   // We don't process these events unless we are in the
@@ -142,6 +147,9 @@ function extractEvents(
   // could alter all these plugins to work in such ways, but
   // that might cause other unknown side-effects that we
   // can't foresee right now.
+
+  // 通常情况下，这些插件只在原生事件的"冒泡"阶段被处理，
+  // 因为 React 仍然在内部模拟捕获阶段，直接在捕获阶段调用这些插件可能会导致状态问题。
   if (shouldProcessPolyfillPlugins) {
     EnterLeaveEventPlugin.extractEvents(
       dispatchQueue,

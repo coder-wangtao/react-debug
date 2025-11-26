@@ -7,12 +7,12 @@
  * @flow
  */
 
-import type {DOMEventName} from '../../events/DOMEventNames';
-import type {Fiber} from 'react-reconciler/src/ReactInternalTypes';
-import type {AnyNativeEvent} from '../../events/PluginModuleType';
-import type {DispatchQueue} from '../DOMPluginEventSystem';
-import type {EventSystemFlags} from '../EventSystemFlags';
-import type {ReactSyntheticEvent} from '../ReactSyntheticEventType';
+import type { DOMEventName } from "../../events/DOMEventNames";
+import type { Fiber } from "react-reconciler/src/ReactInternalTypes";
+import type { AnyNativeEvent } from "../../events/PluginModuleType";
+import type { DispatchQueue } from "../DOMPluginEventSystem";
+import type { EventSystemFlags } from "../EventSystemFlags";
+import type { ReactSyntheticEvent } from "../ReactSyntheticEventType";
 
 import {
   SyntheticEvent,
@@ -28,30 +28,30 @@ import {
   SyntheticClipboardEvent,
   SyntheticPointerEvent,
   SyntheticToggleEvent,
-} from '../../events/SyntheticEvent';
+} from "../../events/SyntheticEvent";
 
 import {
   ANIMATION_END,
   ANIMATION_ITERATION,
   ANIMATION_START,
   TRANSITION_END,
-} from '../DOMEventNames';
+} from "../DOMEventNames";
 import {
   topLevelEventsToReactNames,
   registerSimpleEvents,
-} from '../DOMEventProperties';
+} from "../DOMEventProperties";
 import {
   accumulateSinglePhaseListeners,
   accumulateEventHandleNonManagedNodeListeners,
-} from '../DOMPluginEventSystem';
+} from "../DOMPluginEventSystem";
 import {
   IS_EVENT_HANDLE_NON_MANAGED_NODE,
   IS_CAPTURE_PHASE,
-} from '../EventSystemFlags';
+} from "../EventSystemFlags";
 
-import getEventCharCode from '../getEventCharCode';
+import getEventCharCode from "../getEventCharCode";
 
-import {enableCreateEventHandleAPI} from 'shared/ReactFeatureFlags';
+import { enableCreateEventHandleAPI } from "shared/ReactFeatureFlags";
 
 function extractEvents(
   dispatchQueue: DispatchQueue,
@@ -60,8 +60,14 @@ function extractEvents(
   nativeEvent: AnyNativeEvent,
   nativeEventTarget: null | EventTarget,
   eventSystemFlags: EventSystemFlags,
-  targetContainer: EventTarget,
+  targetContainer: EventTarget
 ): void {
+  // 映射原生事件到 React 事件名：将如 click 映射到 onClick
+  // 选择合适的合成事件构造函数：根据原生事件类型（如 MouseEvent, KeyboardEvent）选择对应的 SyntheticMouseEvent, SyntheticKeyboardEvent 等
+  // 处理特定事件的浏览器兼容性问题：例如，过滤掉 Firefox 中由鼠标右键触发的 click 事件，或处理 focusin/focusout 到 onFocus/onBlur 的转换
+  // 收集监听器：调用 accumulateSinglePhaseListeners（或在特定情况下调用 accumulateEventHandleNonManagedNodeListeners）来遍历 Fiber 树，收集捕获和冒泡阶段的事件处理函数
+  // 创建合成事件对象：如果收集到监听器，则创建一个合成事件实例
+  // 推入调度队列：将合成事件和监听器列表推入 dispatchQueue
   const reactName = topLevelEventsToReactNames.get(domEventName);
   if (reactName === undefined) {
     return;
@@ -69,7 +75,7 @@ function extractEvents(
   let SyntheticEventCtor = SyntheticEvent;
   let reactEventType: string = domEventName;
   switch (domEventName) {
-    case 'keypress':
+    case "keypress":
       // Firefox creates a keypress event for function keys too. This removes
       // the unwanted keypress events. Enter is however both printable and
       // non-printable. One would expect Tab to be as well (but it isn't).
@@ -79,23 +85,23 @@ function extractEvents(
         return;
       }
     /* falls through */
-    case 'keydown':
-    case 'keyup':
+    case "keydown":
+    case "keyup":
       SyntheticEventCtor = SyntheticKeyboardEvent;
       break;
-    case 'focusin':
-      reactEventType = 'focus';
+    case "focusin":
+      reactEventType = "focus";
       SyntheticEventCtor = SyntheticFocusEvent;
       break;
-    case 'focusout':
-      reactEventType = 'blur';
+    case "focusout":
+      reactEventType = "blur";
       SyntheticEventCtor = SyntheticFocusEvent;
       break;
-    case 'beforeblur':
-    case 'afterblur':
+    case "beforeblur":
+    case "afterblur":
       SyntheticEventCtor = SyntheticFocusEvent;
       break;
-    case 'click':
+    case "click":
       // Firefox creates a click event on right mouse clicks. This removes the
       // unwanted click events.
       // TODO: Fixed in https://phabricator.services.mozilla.com/D26793. Can
@@ -104,32 +110,32 @@ function extractEvents(
         return;
       }
     /* falls through */
-    case 'auxclick':
-    case 'dblclick':
-    case 'mousedown':
-    case 'mousemove':
-    case 'mouseup':
+    case "auxclick":
+    case "dblclick":
+    case "mousedown":
+    case "mousemove":
+    case "mouseup":
     // TODO: Disabled elements should not respond to mouse events
     /* falls through */
-    case 'mouseout':
-    case 'mouseover':
-    case 'contextmenu':
+    case "mouseout":
+    case "mouseover":
+    case "contextmenu":
       SyntheticEventCtor = SyntheticMouseEvent;
       break;
-    case 'drag':
-    case 'dragend':
-    case 'dragenter':
-    case 'dragexit':
-    case 'dragleave':
-    case 'dragover':
-    case 'dragstart':
-    case 'drop':
+    case "drag":
+    case "dragend":
+    case "dragenter":
+    case "dragexit":
+    case "dragleave":
+    case "dragover":
+    case "dragstart":
+    case "drop":
       SyntheticEventCtor = SyntheticDragEvent;
       break;
-    case 'touchcancel':
-    case 'touchend':
-    case 'touchmove':
-    case 'touchstart':
+    case "touchcancel":
+    case "touchend":
+    case "touchmove":
+    case "touchstart":
       SyntheticEventCtor = SyntheticTouchEvent;
       break;
     case ANIMATION_END:
@@ -140,30 +146,30 @@ function extractEvents(
     case TRANSITION_END:
       SyntheticEventCtor = SyntheticTransitionEvent;
       break;
-    case 'scroll':
-    case 'scrollend':
+    case "scroll":
+    case "scrollend":
       SyntheticEventCtor = SyntheticUIEvent;
       break;
-    case 'wheel':
+    case "wheel":
       SyntheticEventCtor = SyntheticWheelEvent;
       break;
-    case 'copy':
-    case 'cut':
-    case 'paste':
+    case "copy":
+    case "cut":
+    case "paste":
       SyntheticEventCtor = SyntheticClipboardEvent;
       break;
-    case 'gotpointercapture':
-    case 'lostpointercapture':
-    case 'pointercancel':
-    case 'pointerdown':
-    case 'pointermove':
-    case 'pointerout':
-    case 'pointerover':
-    case 'pointerup':
+    case "gotpointercapture":
+    case "lostpointercapture":
+    case "pointercancel":
+    case "pointerdown":
+    case "pointermove":
+    case "pointerout":
+    case "pointerover":
+    case "pointerup":
       SyntheticEventCtor = SyntheticPointerEvent;
       break;
-    case 'toggle':
-    case 'beforetoggle':
+    case "toggle":
+    case "beforetoggle":
       // MDN claims <details> should not receive ToggleEvent contradicting the spec: https://html.spec.whatwg.org/multipage/indices.html#event-toggle
       SyntheticEventCtor = SyntheticToggleEvent;
       break;
@@ -182,7 +188,7 @@ function extractEvents(
       // "focus" where React listens to e.g. "focusin".
       ((reactEventType: any): DOMEventName),
       targetContainer,
-      inCapturePhase,
+      inCapturePhase
     );
     if (listeners.length > 0) {
       // Intentionally create event lazily.
@@ -191,9 +197,9 @@ function extractEvents(
         reactEventType,
         null,
         nativeEvent,
-        nativeEventTarget,
+        nativeEventTarget
       );
-      dispatchQueue.push({event, listeners});
+      dispatchQueue.push({ event, listeners });
     }
   } else {
     // Some events don't bubble in the browser.
@@ -206,7 +212,7 @@ function extractEvents(
       // nonDelegatedEvents list in DOMPluginEventSystem.
       // Then we can remove this special list.
       // This is a breaking change that can wait until React 18.
-      (domEventName === 'scroll' || domEventName === 'scrollend');
+      (domEventName === "scroll" || domEventName === "scrollend");
 
     const listeners = accumulateSinglePhaseListeners(
       targetInst,
@@ -214,7 +220,7 @@ function extractEvents(
       nativeEvent.type,
       inCapturePhase,
       accumulateTargetOnly,
-      nativeEvent,
+      nativeEvent
     );
     if (listeners.length > 0) {
       // Intentionally create event lazily.
@@ -223,11 +229,11 @@ function extractEvents(
         reactEventType,
         null,
         nativeEvent,
-        nativeEventTarget,
+        nativeEventTarget
       );
-      dispatchQueue.push({event, listeners});
+      dispatchQueue.push({ event, listeners });
     }
   }
 }
 
-export {registerSimpleEvents as registerEvents, extractEvents};
+export { registerSimpleEvents as registerEvents, extractEvents };

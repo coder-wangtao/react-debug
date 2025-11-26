@@ -7,9 +7,9 @@
  * @flow
  */
 
-import type {DOMEventName} from './DOMEventNames';
+import type { DOMEventName } from "./DOMEventNames";
 
-import {registerTwoPhaseEvent} from './EventRegistry';
+import { registerTwoPhaseEvent } from "./EventRegistry";
 import {
   ANIMATION_END,
   ANIMATION_ITERATION,
@@ -18,12 +18,12 @@ import {
   TRANSITION_START,
   TRANSITION_CANCEL,
   TRANSITION_END,
-} from './DOMEventNames';
+} from "./DOMEventNames";
 
 import {
   enableCreateEventHandleAPI,
   enableScrollEndPolyfill,
-} from 'shared/ReactFeatureFlags';
+} from "shared/ReactFeatureFlags";
 
 export const topLevelEventsToReactNames: Map<DOMEventName, string | null> =
   new Map();
@@ -110,14 +110,14 @@ const simpleEventPluginEvents = [
 ];
 
 if (!enableScrollEndPolyfill) {
-  simpleEventPluginEvents.push('scrollEnd');
+  simpleEventPluginEvents.push("scrollEnd");
 }
 
 if (enableCreateEventHandleAPI) {
   // Special case: these two events don't have on* React handler
   // and are only accessible via the createEventHandle API.
-  topLevelEventsToReactNames.set('beforeblur', null);
-  topLevelEventsToReactNames.set('afterblur', null);
+  topLevelEventsToReactNames.set("beforeblur", null);
+  topLevelEventsToReactNames.set("afterblur", null);
 }
 
 function registerSimpleEvent(domEventName: DOMEventName, reactName: string) {
@@ -130,18 +130,18 @@ export function registerSimpleEvents() {
     const eventName = ((simpleEventPluginEvents[i]: any): string);
     const domEventName = ((eventName.toLowerCase(): any): DOMEventName);
     const capitalizedEvent = eventName[0].toUpperCase() + eventName.slice(1);
-    registerSimpleEvent(domEventName, 'on' + capitalizedEvent);
+    registerSimpleEvent(domEventName, "on" + capitalizedEvent);
   }
   // Special cases where event names don't match.
-  registerSimpleEvent(ANIMATION_END, 'onAnimationEnd');
-  registerSimpleEvent(ANIMATION_ITERATION, 'onAnimationIteration');
-  registerSimpleEvent(ANIMATION_START, 'onAnimationStart');
-  registerSimpleEvent('dblclick', 'onDoubleClick');
-  registerSimpleEvent('focusin', 'onFocus');
-  registerSimpleEvent('focusout', 'onBlur');
+  registerSimpleEvent(ANIMATION_END, "onAnimationEnd");
+  registerSimpleEvent(ANIMATION_ITERATION, "onAnimationIteration");
+  registerSimpleEvent(ANIMATION_START, "onAnimationStart");
+  registerSimpleEvent("dblclick", "onDoubleClick");
+  registerSimpleEvent("focusin", "onFocus");
+  registerSimpleEvent("focusout", "onBlur");
 
-  registerSimpleEvent(TRANSITION_RUN, 'onTransitionRun');
-  registerSimpleEvent(TRANSITION_START, 'onTransitionStart');
-  registerSimpleEvent(TRANSITION_CANCEL, 'onTransitionCancel');
-  registerSimpleEvent(TRANSITION_END, 'onTransitionEnd');
+  registerSimpleEvent(TRANSITION_RUN, "onTransitionRun");
+  registerSimpleEvent(TRANSITION_START, "onTransitionStart");
+  registerSimpleEvent(TRANSITION_CANCEL, "onTransitionCancel");
+  registerSimpleEvent(TRANSITION_END, "onTransitionEnd");
 }
