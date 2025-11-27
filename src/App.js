@@ -15,6 +15,8 @@ import Ref19 from "@/components/ref19";
 import AutomaticApp from "@/components/batching/Automatic";
 import ConcurrentApp from "@/components/batching/Concurrent";
 import EventTest from "@/components/event-test";
+import SchedulerTest from "@/components/scheduler-test";
+
 function App() {
   return (
     <div id="app">
@@ -30,7 +32,7 @@ function App() {
       {/* <AutomaticApp /> */}
       {/* <ConcurrentApp /> */}
       {/* <Ref19 /> */}
-      <EventTest />
+      <SchedulerTest />
     </div>
   );
 }

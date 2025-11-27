@@ -15,4 +15,5 @@ export const normalPriorityTimeout = 5000;
 export const lowPriorityTimeout = 10000;
 export const enableRequestPaint = true;
 
+// __EXPERIMENTAL__:TODO:确保每个任务都是给浏览量让路
 export const enableAlwaysYieldScheduler = __EXPERIMENTAL__;

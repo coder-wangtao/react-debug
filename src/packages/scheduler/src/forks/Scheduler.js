@@ -24,6 +24,7 @@ import {
 import { push, pop, peek } from "../SchedulerMinHeap";
 
 // TODO: Use symbols?
+// Scheduler 优先级划分，数字越小优先级越高，0 表示没有优先级
 import {
   ImmediatePriority,
   UserBlockingPriority,
@@ -63,6 +64,8 @@ const hasPerformanceNow =
 
 if (hasPerformanceNow) {
   const localPerformance = performance;
+  // 浏览器提供的 API，获取从 time origin（当前文档生命周期的开始节点时间）
+  // 之后到当前调用时经过的时间，它以一个恒定的速率慢慢增加的，不会受到系统时间的影响，
   getCurrentTime = () => localPerformance.now();
 } else {
   const localDate = Date;
@@ -100,6 +103,7 @@ const localClearTimeout =
 const localSetImmediate =
   typeof setImmediate !== "undefined" ? setImmediate : null; // IE and Node.js + jsdom
 
+// 检查 timerQueue 中的任务，将到期的任务转到 taskQueue 中
 function advanceTimers(currentTime: number) {
   // Check for tasks that are no longer delayed and add them to the queue.
   let timer = peek(timerQueue);
@@ -148,6 +152,11 @@ function flushWork(initialTime: number) {
 
   // We'll need a host callback the next time work is scheduled.
   isHostCallbackScheduled = false;
+  // 定时器的目的表面上是为了保证最早的延时 任务准时安排调度，实际上是为了保证 timerQueue 中的任务都能被执行。
+  // 定时器到期后，我们会执行 advanceTimers 和 flushWork，flushWork 中会执行 workLoop，
+  // workLoop 中会将 taskQueue 中的任务不断执行，当 taskQueue 执行完毕后，
+  // workLoop 会选择 timerQueue 中的最早的任务重新设置一个定时器。
+  // 所以如果 flushWork 执行了，定时器也就没有必要了，所以可以取消了。
   if (isHostTimeoutScheduled) {
     // We scheduled a timeout but it's no longer needed. Cancel it.
     isHostTimeoutScheduled = false;
@@ -190,6 +199,7 @@ function workLoop(initialTime: number) {
   let currentTime = initialTime;
   advanceTimers(currentTime);
   currentTask = peek(taskQueue);
+  console.log("workLoop start");
   while (currentTask !== null) {
     if (!enableAlwaysYieldScheduler) {
       // 是否让出主线程
@@ -327,7 +337,7 @@ function unstable_wrapCallback<T: (...Array<mixed>) => mixed>(callback: T): T {
 }
 
 function unstable_scheduleCallback(
-  priorityLevel: PriorityLevel,
+  priorityLevel: PriorityLevel, // 任务的优先级
   callback: Callback,
   options?: { delay: number }
 ): Task {
@@ -394,6 +404,7 @@ function unstable_scheduleCallback(
   }
   // 6. 将任务加入队列
   if (startTime > currentTime) {
+    // TODO:延迟任务
     // This is a delayed task.
     //   这是一个延迟任务 (delayed task)
     //   设置 newTask.sortIndex = startTime
@@ -416,6 +427,7 @@ function unstable_scheduleCallback(
       requestHostTimeout(handleTimeout, startTime - currentTime);
     }
   } else {
+    // TODO: 立即任务
     // 这是一个立即任务 (immediate task) 或已到期的延迟任务
     // - 设置 newTask.sortIndex = expirationTime
     // - 将 newTask 加入 taskQueue (一个按 expirationTime 排序的最小堆)
@@ -430,6 +442,7 @@ function unstable_scheduleCallback(
     }
     // Schedule a host callback, if needed. If we're already performing work,
     // wait until the next time we yield.
+    // 如果没有正在执行的 requestHostCallback 并且任务队列也没有被执行
     if (!isHostCallbackScheduled && !isPerformingWork) {
       isHostCallbackScheduled = true;
       requestHostCallback();
@@ -468,6 +481,7 @@ let taskTimeoutID: TimeoutID = (-1: any);
 let frameInterval: number = frameYieldMs;
 let startTime = -1;
 
+// 判断是否让出线程，主要看这批任务自开始过了多久，超过了切片时间，就让出线程
 function shouldYieldToHost(): boolean {
   if (!enableAlwaysYieldScheduler && enableRequestPaint && needsPaint) {
     // Yield now.
@@ -507,7 +521,11 @@ function forceFrameRate(fps: number) {
     frameInterval = frameYieldMs;
   }
 }
-
+// 批量任务的开始时间
+// React 并不是每一个任务执行完都执行 schedulePerformWorkUntilDeadline 让出线程的，
+// 而是执行完一个任务，看看过了多久，如果时间不超过 5ms，那就再执行一个任务，
+// 等做完一个任务，发现过了 5ms，这才让出线程，所以 React 是一批一批任务执行的，
+// startTime 记录的是这一批任务的开始时间，而不是单个任务的开始时间。
 const performWorkUntilDeadline = () => {
   if (enableRequestPaint) {
     needsPaint = false;
@@ -526,12 +544,14 @@ const performWorkUntilDeadline = () => {
     // remain true, and we'll continue the work loop.
     let hasMoreWork = true;
     try {
-      // 冲洗工作
+      // 一个时间切片执行完，是否还有多余的任务
       hasMoreWork = flushWork(currentTime);
     } finally {
       if (hasMoreWork) {
         // If there's more work, schedule the next message event at the end
         // of the preceding one.
+        // 如果在一个时间切片里没有完成所有任务，
+        // 就继续调用postMessage 让出线程，等浏览器空闲了再继续执行剩下的任务
         schedulePerformWorkUntilDeadline();
       } else {
         isMessageLoopRunning = false;

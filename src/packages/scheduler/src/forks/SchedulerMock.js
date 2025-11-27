@@ -10,10 +10,10 @@
 /* eslint-disable no-var */
 /* eslint-disable react-internal/prod-error-codes */
 
-import type {PriorityLevel} from '../SchedulerPriorities';
+import type { PriorityLevel } from "../SchedulerPriorities";
 
-import {enableProfiling} from '../SchedulerFeatureFlags';
-import {push, pop, peek} from '../SchedulerMinHeap';
+import { enableProfiling } from "../SchedulerFeatureFlags";
+import { push, pop, peek } from "../SchedulerMinHeap";
 
 // TODO: Use symbols?
 import {
@@ -22,7 +22,7 @@ import {
   NormalPriority,
   LowPriority,
   IdlePriority,
-} from '../SchedulerPriorities';
+} from "../SchedulerPriorities";
 import {
   markTaskRun,
   markTaskYield,
@@ -34,9 +34,9 @@ import {
   markTaskStart,
   stopLoggingProfilingEvents,
   startLoggingProfilingEvents,
-} from '../SchedulerProfiling';
+} from "../SchedulerProfiling";
 
-type Callback = boolean => ?Callback;
+type Callback = (boolean) => ?Callback;
 
 type Task = {
   id: number,
@@ -51,8 +51,12 @@ type Task = {
 // Max 31 bit integer. The max integer size in V8 for 32-bit systems.
 // Math.pow(2, 30) - 1
 // 0b111111111111111111111111111111
+// 所以这个值是 2 的 30 次方 - 1，也就是 1073741823，这个时间大概是 12.4 天
 var maxSigned31BitInt = 1073741823;
 
+//Scheduler 根据优先级设置的对应 timeout 时间，越小越紧急
+// 在 React 中，任务是可以被打断的，但是任务不能一直被打断，所以要设置一个超时时间，过了这个时间就必须立刻执行
+// timeout 就表示超时时间
 // Times out immediately
 var IMMEDIATE_PRIORITY_TIMEOUT = -1;
 // Eventually times out
@@ -83,9 +87,9 @@ let scheduledCallback:
   | null
   | ((
       hasTimeRemaining: boolean,
-      initialTime: DOMHighResTimeStamp | number,
+      initialTime: DOMHighResTimeStamp | number
     ) => boolean) = null;
-let scheduledTimeout: (number => void) | null = null;
+let scheduledTimeout: ((number) => void) | null = null;
 let timeoutTime: number = -1;
 let yieldedValues: Array<mixed> | null = null;
 let expectedNumberOfYields: number = -1;
@@ -186,6 +190,7 @@ function flushWork(hasTimeRemaining: boolean, initialTime: number) {
 }
 
 function workLoop(hasTimeRemaining: boolean, initialTime: number): boolean {
+  console.log("workLoop start");
   let currentTime = initialTime;
   advanceTimers(currentTime);
   currentTask = peek(taskQueue);
@@ -199,7 +204,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number): boolean {
     }
     // $FlowFixMe[incompatible-use] found when upgrading Flow
     const callback = currentTask.callback;
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       // $FlowFixMe[incompatible-use] found when upgrading Flow
       currentTask.callback = null;
       // $FlowFixMe[incompatible-use] found when upgrading Flow
@@ -212,7 +217,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number): boolean {
       }
       const continuationCallback = callback(didUserCallbackTimeout);
       currentTime = getCurrentTime();
-      if (typeof continuationCallback === 'function') {
+      if (typeof continuationCallback === "function") {
         // If a continuation is returned, immediately yield to the main thread
         // regardless of how much time is left in the current time slice.
         // $FlowFixMe[incompatible-use] found when upgrading Flow
@@ -262,7 +267,7 @@ function workLoop(hasTimeRemaining: boolean, initialTime: number): boolean {
 
 function unstable_runWithPriority<T>(
   priorityLevel: PriorityLevel,
-  eventHandler: () => T,
+  eventHandler: () => T
 ): T {
   switch (priorityLevel) {
     case ImmediatePriority:
@@ -330,14 +335,14 @@ function unstable_wrapCallback<T: (...Array<mixed>) => mixed>(callback: T): T {
 function unstable_scheduleCallback(
   priorityLevel: PriorityLevel,
   callback: Callback,
-  options?: {delay: number},
+  options?: { delay: number }
 ): Task {
   var currentTime = getCurrentTime();
 
   var startTime;
-  if (typeof options === 'object' && options !== null) {
+  if (typeof options === "object" && options !== null) {
     var delay = options.delay;
-    if (typeof delay === 'number' && delay > 0) {
+    if (typeof delay === "number" && delay > 0) {
       startTime = currentTime + delay;
     } else {
       startTime = currentTime;
@@ -436,7 +441,7 @@ function requestHostCallback(callback: (boolean, number) => boolean) {
   scheduledCallback = callback;
 }
 
-function requestHostTimeout(callback: number => void, ms: number) {
+function requestHostTimeout(callback: (number) => void, ms: number) {
   scheduledTimeout = callback;
   timeoutTime = currentMockTime + ms;
 }
@@ -471,7 +476,7 @@ function forceFrameRate() {
 
 function reset() {
   if (isFlushing) {
-    throw new Error('Cannot reset while already flushing work.');
+    throw new Error("Cannot reset while already flushing work.");
   }
   currentMockTime = 0;
   scheduledCallback = null;
@@ -487,7 +492,7 @@ function reset() {
 // Should only be used via an assertion helper that inspects the yielded values.
 function unstable_flushNumberOfYields(count: number): void {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -511,7 +516,7 @@ function unstable_flushNumberOfYields(count: number): void {
 
 function unstable_flushUntilNextPaint(): false {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -541,7 +546,7 @@ function unstable_hasPendingWork(): boolean {
 
 function unstable_flushExpired() {
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     isFlushing = true;
@@ -559,7 +564,7 @@ function unstable_flushExpired() {
 function unstable_flushAllWithoutAsserting(): boolean {
   // Returns false if no work was flushed.
   if (isFlushing) {
-    throw new Error('Already flushing work.');
+    throw new Error("Already flushing work.");
   }
   if (scheduledCallback !== null) {
     const cb = scheduledCallback;
@@ -593,23 +598,23 @@ function unstable_clearLog(): Array<mixed> {
 function unstable_flushAll(): void {
   if (yieldedValues !== null) {
     throw new Error(
-      'Log is not empty. Assert on the log of yielded values before ' +
-        'flushing additional work.',
+      "Log is not empty. Assert on the log of yielded values before " +
+        "flushing additional work."
     );
   }
   unstable_flushAllWithoutAsserting();
   if (yieldedValues !== null) {
     throw new Error(
-      'While flushing work, something yielded a value. Use an ' +
-        'assertion helper to assert on the log of yielded values, e.g. ' +
-        'expect(Scheduler).toFlushAndYield([...])',
+      "While flushing work, something yielded a value. Use an " +
+        "assertion helper to assert on the log of yielded values, e.g. " +
+        "expect(Scheduler).toFlushAndYield([...])"
     );
   }
 }
 
 function log(value: mixed): void {
   // eslint-disable-next-line react-internal/no-production-logging
-  if (console.log.name === 'disabledLog' || disableYieldValue) {
+  if (console.log.name === "disabledLog" || disableYieldValue) {
     // If console.log has been patched, we assume we're in render
     // replaying and we ignore any values yielding in the second pass.
     return;
@@ -623,7 +628,7 @@ function log(value: mixed): void {
 
 function unstable_advanceTime(ms: number) {
   // eslint-disable-next-line react-internal/no-production-logging
-  if (console.log.name === 'disabledLog' || disableYieldValue) {
+  if (console.log.name === "disabledLog" || disableYieldValue) {
     // If console.log has been patched, we assume we're in render
     // replaying and we ignore any time advancing in the second pass.
     return;
