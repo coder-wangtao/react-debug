@@ -190,6 +190,7 @@ export function unsafe_markUpdateLaneFromFiberToRoot(
   return root;
 }
 
+//标记更新的Lane 从Fiber到Root
 function markUpdateLaneFromFiberToRoot(
   sourceFiber: Fiber,
   update: ConcurrentUpdate | null,

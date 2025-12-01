@@ -7,10 +7,10 @@
  * @flow
  */
 
-import type {Fiber, FiberRoot} from './ReactInternalTypes';
-import type {RootState} from './ReactFiberRoot';
-import type {Lanes, Lane} from './ReactFiberLane';
-import type {ReactScopeInstance, ReactContext} from 'shared/ReactTypes';
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
+import type { RootState } from "./ReactFiberRoot";
+import type { Lanes, Lane } from "./ReactFiberLane";
+import type { ReactScopeInstance, ReactContext } from "shared/ReactTypes";
 import type {
   Instance,
   Type,
@@ -18,19 +18,19 @@ import type {
   Container,
   ChildSet,
   Resource,
-} from './ReactFiberConfig';
-import type {ActivityState} from './ReactFiberActivityComponent';
+} from "./ReactFiberConfig";
+import type { ActivityState } from "./ReactFiberActivityComponent";
 import type {
   SuspenseState,
   SuspenseListRenderState,
   RetryQueue,
-} from './ReactFiberSuspenseComponent';
+} from "./ReactFiberSuspenseComponent";
 import type {
   OffscreenState,
   OffscreenQueue,
-} from './ReactFiberOffscreenComponent';
-import type {TracingMarkerInstance} from './ReactFiberTracingMarkerComponent';
-import type {Cache} from './ReactFiberCacheComponent';
+} from "./ReactFiberOffscreenComponent";
+import type { TracingMarkerInstance } from "./ReactFiberTracingMarkerComponent";
+import type { Cache } from "./ReactFiberCacheComponent";
 import {
   enableLegacyHidden,
   enableSuspenseCallback,
@@ -41,9 +41,9 @@ import {
   disableLegacyMode,
   enableViewTransition,
   enableSuspenseyImages,
-} from 'shared/ReactFeatureFlags';
+} from "shared/ReactFeatureFlags";
 
-import {now} from './Scheduler';
+import { now } from "./Scheduler";
 
 import {
   FunctionComponent,
@@ -75,13 +75,13 @@ import {
   Throw,
   ViewTransitionComponent,
   ActivityComponent,
-} from './ReactWorkTags';
+} from "./ReactWorkTags";
 import {
   NoMode,
   ConcurrentMode,
   ProfileMode,
   SuspenseyImagesMode,
-} from './ReactTypeOfMode';
+} from "./ReactTypeOfMode";
 import {
   Placement,
   Update,
@@ -99,7 +99,7 @@ import {
   Cloned,
   ViewTransitionStatic,
   Hydrate,
-} from './ReactFiberFlags';
+} from "./ReactFiberFlags";
 
 import {
   createInstance,
@@ -126,13 +126,13 @@ import {
   mayResourceSuspendCommit,
   preloadInstance,
   preloadResource,
-} from './ReactFiberConfig';
+} from "./ReactFiberConfig";
 import {
   getRootHostContainer,
   popHostContext,
   getHostContext,
   popHostContainer,
-} from './ReactFiberHostContext';
+} from "./ReactFiberHostContext";
 import {
   suspenseStackCursor,
   popSuspenseListContext,
@@ -142,15 +142,15 @@ import {
   setShallowSuspenseListContext,
   ForceSuspenseFallback,
   setDefaultShallowSuspenseListContext,
-} from './ReactFiberSuspenseContext';
-import {popHiddenContext} from './ReactFiberHiddenContext';
-import {findFirstSuspended} from './ReactFiberSuspenseComponent';
+} from "./ReactFiberSuspenseContext";
+import { popHiddenContext } from "./ReactFiberHiddenContext";
+import { findFirstSuspended } from "./ReactFiberSuspenseComponent";
 import {
   isContextProvider as isLegacyContextProvider,
   popContext as popLegacyContext,
   popTopLevelContextObject as popTopLevelLegacyContextObject,
-} from './ReactFiberLegacyContext';
-import {popProvider} from './ReactFiberNewContext';
+} from "./ReactFiberLegacyContext";
+import { popProvider } from "./ReactFiberNewContext";
 import {
   prepareToHydrateHostInstance,
   prepareToHydrateHostTextInstance,
@@ -161,14 +161,14 @@ import {
   getIsHydrating,
   upgradeHydrationErrorsToRecoverable,
   emitPendingHydrationWarnings,
-} from './ReactFiberHydrationContext';
+} from "./ReactFiberHydrationContext";
 import {
   renderHasNotSuspendedYet,
   getRenderTargetTime,
   getWorkInProgressTransitions,
   shouldRemainOnPreviousScreen,
   markSpawnedRetryLane,
-} from './ReactFiberWorkLoop';
+} from "./ReactFiberWorkLoop";
 import {
   OffscreenLane,
   SomeRetryLane,
@@ -177,19 +177,19 @@ import {
   mergeLanes,
   claimNextRetryLane,
   includesOnlySuspenseyCommitEligibleLanes,
-} from './ReactFiberLane';
-import {resetChildFibers} from './ReactChildFiber';
-import {createScopeInstance} from './ReactFiberScope';
-import {transferActualDuration} from './ReactProfilerTimer';
-import {popCacheProvider} from './ReactFiberCacheComponent';
-import {popTreeContext, pushTreeFork} from './ReactFiberTreeContext';
-import {popRootTransition, popTransition} from './ReactFiberTransition';
+} from "./ReactFiberLane";
+import { resetChildFibers } from "./ReactChildFiber";
+import { createScopeInstance } from "./ReactFiberScope";
+import { transferActualDuration } from "./ReactProfilerTimer";
+import { popCacheProvider } from "./ReactFiberCacheComponent";
+import { popTreeContext, pushTreeFork } from "./ReactFiberTreeContext";
+import { popRootTransition, popTransition } from "./ReactFiberTransition";
 import {
   popMarkerInstance,
   popRootMarkerInstance,
-} from './ReactFiberTracingMarkerComponent';
-import {suspendCommit} from './ReactFiberThenable';
-import type {Flags} from './ReactFiberFlags';
+} from "./ReactFiberTracingMarkerComponent";
+import { suspendCommit } from "./ReactFiberThenable";
+import type { Flags } from "./ReactFiberFlags";
 
 /**
  * Tag the fiber with an update effect. This turns a Placement into
@@ -242,7 +242,7 @@ function appendAllChildren(
   parent: Instance,
   workInProgress: Fiber,
   needsVisibilityToggle: boolean,
-  isHidden: boolean,
+  isHidden: boolean
 ) {
   if (supportsMutation) {
     // We only have the top Fiber that was created but we need recurse down its
@@ -319,7 +319,7 @@ function appendAllChildren(
           parent,
           node,
           /* needsVisibilityToggle */ true,
-          /* isHidden */ true,
+          /* isHidden */ true
         );
       } else if (node.child !== null) {
         node.child.return = node;
@@ -349,7 +349,7 @@ function appendAllChildrenToContainer(
   containerChildSet: ChildSet,
   workInProgress: Fiber,
   needsVisibilityToggle: boolean,
-  isHidden: boolean,
+  isHidden: boolean
 ): boolean {
   // Host components that have their visibility toggled by an OffscreenComponent
   // do not support passChildrenWhenCloningPersistedNodes. To inform the callee
@@ -396,7 +396,7 @@ function appendAllChildrenToContainer(
           containerChildSet,
           node,
           /* needsVisibilityToggle */ true,
-          /* isHidden */ true,
+          /* isHidden */ true
         );
 
         hasOffscreenComponentChild = true;
@@ -441,7 +441,7 @@ function updateHostContainer(current: null | Fiber, workInProgress: Fiber) {
         newChildSet,
         workInProgress,
         /* needsVisibilityToggle */ false,
-        /* isHidden */ false,
+        /* isHidden */ false
       );
       portalOrRoot.pendingChildren = newChildSet;
       // Schedule an update on the container to swap out the container.
@@ -456,7 +456,7 @@ function updateHostComponent(
   workInProgress: Fiber,
   type: Type,
   newProps: Props,
-  renderLanes: Lanes,
+  renderLanes: Lanes
 ) {
   if (supportsMutation) {
     // If we have an alternate, that means this is an update and we need to
@@ -493,7 +493,7 @@ function updateHostComponent(
         newChildSet,
         workInProgress,
         /* needsVisibilityToggle */ false,
-        /* isHidden */ false,
+        /* isHidden */ false
       );
     }
 
@@ -503,7 +503,7 @@ function updateHostComponent(
       oldProps,
       newProps,
       !requiresClone,
-      !hasOffscreenComponentChild ? newChildSet : undefined,
+      !hasOffscreenComponentChild ? newChildSet : undefined
     );
     if (newInstance === currentInstance) {
       // No changes, just reuse the existing instance.
@@ -532,7 +532,7 @@ function updateHostComponent(
         newInstance,
         workInProgress,
         /* needsVisibilityToggle */ false,
-        /* isHidden */ false,
+        /* isHidden */ false
       );
     }
   }
@@ -551,7 +551,7 @@ function preloadInstanceAndSuspendIfNeeded(
   type: Type,
   oldProps: null | Props,
   newProps: Props,
-  renderLanes: Lanes,
+  renderLanes: Lanes
 ) {
   const maySuspend =
     (enableSuspenseyImages ||
@@ -606,7 +606,7 @@ function preloadResourceAndSuspendIfNeeded(
   resource: Resource,
   type: Type,
   props: Props,
-  renderLanes: Lanes,
+  renderLanes: Lanes
 ) {
   // This is a fork of preloadInstanceAndSuspendIfNeeded, but for resources.
   if (!mayResourceSuspendCommit(resource)) {
@@ -628,7 +628,7 @@ function preloadResourceAndSuspendIfNeeded(
 
 function scheduleRetryEffect(
   workInProgress: Fiber,
-  retryQueue: RetryQueue | null,
+  retryQueue: RetryQueue | null
 ) {
   const wakeables = retryQueue;
   if (wakeables !== null) {
@@ -664,7 +664,7 @@ function updateHostText(
   current: Fiber,
   workInProgress: Fiber,
   oldText: string,
-  newText: string,
+  newText: string
 ) {
   if (supportsMutation) {
     // If the text differs, mark it as an update. All the work in done in commitWork.
@@ -681,7 +681,7 @@ function updateHostText(
         newText,
         rootContainerInstance,
         currentHostContext,
-        workInProgress,
+        workInProgress
       );
     } else {
       workInProgress.stateNode = current.stateNode;
@@ -691,7 +691,7 @@ function updateHostText(
 
 function cutOffTailIfNeeded(
   renderState: SuspenseListRenderState,
-  hasRenderedATailFallback: boolean,
+  hasRenderedATailFallback: boolean
 ) {
   if (getIsHydrating()) {
     // If we're hydrating, we should consume as many items as we can
@@ -699,11 +699,11 @@ function cutOffTailIfNeeded(
     return;
   }
   switch (renderState.tailMode) {
-    case 'visible': {
+    case "visible": {
       // Everything should remain as it was.
       break;
     }
-    case 'collapsed': {
+    case "collapsed": {
       // Any insertions at the end of the tail list after this point
       // should be invisible. If there are already mounted boundaries
       // anything before them are not considered for collapsing.
@@ -736,7 +736,7 @@ function cutOffTailIfNeeded(
       break;
     }
     // Hidden is now the default.
-    case 'hidden':
+    case "hidden":
     default: {
       // Any insertions at the end of the tail list after this point
       // should be invisible. If there are already mounted boundaries
@@ -797,7 +797,7 @@ function bubbleProperties(completedWork: Fiber) {
       while (child !== null) {
         newChildLanes = mergeLanes(
           newChildLanes,
-          mergeLanes(child.lanes, child.childLanes),
+          mergeLanes(child.lanes, child.childLanes)
         );
 
         subtreeFlags |= child.subtreeFlags;
@@ -825,7 +825,7 @@ function bubbleProperties(completedWork: Fiber) {
       while (child !== null) {
         newChildLanes = mergeLanes(
           newChildLanes,
-          mergeLanes(child.lanes, child.childLanes),
+          mergeLanes(child.lanes, child.childLanes)
         );
 
         subtreeFlags |= child.subtreeFlags;
@@ -852,7 +852,7 @@ function bubbleProperties(completedWork: Fiber) {
       while (child !== null) {
         newChildLanes = mergeLanes(
           newChildLanes,
-          mergeLanes(child.lanes, child.childLanes),
+          mergeLanes(child.lanes, child.childLanes)
         );
 
         // "Static" flags share the lifetime of the fiber/hook they belong to,
@@ -873,7 +873,7 @@ function bubbleProperties(completedWork: Fiber) {
       while (child !== null) {
         newChildLanes = mergeLanes(
           newChildLanes,
-          mergeLanes(child.lanes, child.childLanes),
+          mergeLanes(child.lanes, child.childLanes)
         );
 
         // "Static" flags share the lifetime of the fiber/hook they belong to,
@@ -903,7 +903,7 @@ function bubbleProperties(completedWork: Fiber) {
 function completeDehydratedActivityBoundary(
   current: Fiber | null,
   workInProgress: Fiber,
-  nextState: ActivityState | null,
+  nextState: ActivityState | null
 ): boolean {
   const wasHydrated = popHydrationState(workInProgress);
 
@@ -913,8 +913,8 @@ function completeDehydratedActivityBoundary(
     if (current === null) {
       if (!wasHydrated) {
         throw new Error(
-          'A dehydrated suspense component was completed without a hydrated node. ' +
-            'This is probably a bug in React.',
+          "A dehydrated suspense component was completed without a hydrated node. " +
+            "This is probably a bug in React."
         );
       }
       prepareToHydrateHostActivityInstance(workInProgress);
@@ -985,7 +985,7 @@ function completeDehydratedActivityBoundary(
 function completeDehydratedSuspenseBoundary(
   current: Fiber | null,
   workInProgress: Fiber,
-  nextState: SuspenseState | null,
+  nextState: SuspenseState | null
 ): boolean {
   const wasHydrated = popHydrationState(workInProgress);
 
@@ -995,8 +995,8 @@ function completeDehydratedSuspenseBoundary(
     if (current === null) {
       if (!wasHydrated) {
         throw new Error(
-          'A dehydrated suspense component was completed without a hydrated node. ' +
-            'This is probably a bug in React.',
+          "A dehydrated suspense component was completed without a hydrated node. " +
+            "This is probably a bug in React."
         );
       }
       prepareToHydrateHostSuspenseInstance(workInProgress);
@@ -1067,7 +1067,7 @@ function completeDehydratedSuspenseBoundary(
 function completeWork(
   current: Fiber | null,
   workInProgress: Fiber,
-  renderLanes: Lanes,
+  renderLanes: Lanes
 ): Fiber | null {
   const newProps = workInProgress.pendingProps;
   // Note: This intentionally doesn't check if we're hydrating because comparing
@@ -1205,7 +1205,7 @@ function completeWork(
               nextResource,
               type,
               newProps,
-              renderLanes,
+              renderLanes
             );
             return null;
           } else {
@@ -1217,7 +1217,7 @@ function completeWork(
               type,
               null,
               newProps,
-              renderLanes,
+              renderLanes
             );
             return null;
           }
@@ -1239,7 +1239,7 @@ function completeWork(
                 nextResource,
                 type,
                 newProps,
-                renderLanes,
+                renderLanes
               );
               return null;
             } else {
@@ -1264,7 +1264,7 @@ function completeWork(
                 workInProgress,
                 type,
                 newProps,
-                renderLanes,
+                renderLanes
               );
             }
             // This must come at the very end of the complete phase.
@@ -1274,7 +1274,7 @@ function completeWork(
               type,
               oldProps,
               newProps,
-              renderLanes,
+              renderLanes
             );
             return null;
           }
@@ -1299,15 +1299,15 @@ function completeWork(
               workInProgress,
               type,
               newProps,
-              renderLanes,
+              renderLanes
             );
           }
         } else {
           if (!newProps) {
             if (workInProgress.stateNode === null) {
               throw new Error(
-                'We must have new props for new mounts. This error is likely ' +
-                  'caused by a bug in React. Please file an issue.',
+                "We must have new props for new mounts. This error is likely " +
+                  "caused by a bug in React. Please file an issue."
               );
             }
 
@@ -1336,7 +1336,7 @@ function completeWork(
               newProps,
               rootContainerInstance,
               currentHostContext,
-              true,
+              true
             );
             workInProgress.stateNode = instance;
             markUpdate(workInProgress);
@@ -1361,14 +1361,14 @@ function completeWork(
           workInProgress,
           type,
           newProps,
-          renderLanes,
+          renderLanes
         );
       } else {
         if (!newProps) {
           if (workInProgress.stateNode === null) {
             throw new Error(
-              'We must have new props for new mounts. This error is likely ' +
-                'caused by a bug in React. Please file an issue.',
+              "We must have new props for new mounts. This error is likely " +
+                "caused by a bug in React. Please file an issue."
             );
           }
 
@@ -1397,7 +1397,7 @@ function completeWork(
               workInProgress.stateNode,
               type,
               newProps,
-              currentHostContext,
+              currentHostContext
             )
           ) {
             workInProgress.flags |= Hydrate;
@@ -1409,7 +1409,7 @@ function completeWork(
             newProps,
             rootContainerInstance,
             currentHostContext,
-            workInProgress,
+            workInProgress
           );
           // TODO: For persistent renderers, we should pass children as part
           // of the initial instance creation
@@ -1425,7 +1425,7 @@ function completeWork(
               instance,
               type,
               newProps,
-              currentHostContext,
+              currentHostContext
             )
           ) {
             markUpdate(workInProgress);
@@ -1448,7 +1448,7 @@ function completeWork(
         workInProgress.type,
         current === null ? null : current.memoizedProps,
         workInProgress.pendingProps,
-        renderLanes,
+        renderLanes
       );
       return null;
     }
@@ -1460,11 +1460,11 @@ function completeWork(
         // to schedule a side-effect to do the updates.
         updateHostText(current, workInProgress, oldText, newText);
       } else {
-        if (typeof newText !== 'string') {
+        if (typeof newText !== "string") {
           if (workInProgress.stateNode === null) {
             throw new Error(
-              'We must have new props for new mounts. This error is likely ' +
-                'caused by a bug in React. Please file an issue.',
+              "We must have new props for new mounts. This error is likely " +
+                "caused by a bug in React. Please file an issue."
             );
           }
           // This can happen when we abort work.
@@ -1480,7 +1480,7 @@ function completeWork(
             newText,
             rootContainerInstance,
             currentHostContext,
-            workInProgress,
+            workInProgress
           );
         }
       }
@@ -1495,7 +1495,7 @@ function completeWork(
           completeDehydratedActivityBoundary(
             current,
             workInProgress,
-            nextState,
+            nextState
           );
         if (!fallthroughToNormalOffscreenPath) {
           if (workInProgress.flags & ForceClientRender) {
@@ -1517,7 +1517,7 @@ function completeWork(
           // not have pushed a suspense handler during that second pass and it should
           // instead have suspended above.
           throw new Error(
-            'Client rendering an Activity suspended it again. This is a bug in React.',
+            "Client rendering an Activity suspended it again. This is a bug in React."
           );
         }
 
@@ -1544,7 +1544,7 @@ function completeWork(
           completeDehydratedSuspenseBoundary(
             current,
             workInProgress,
-            nextState,
+            nextState
           );
         if (!fallthroughToNormalSuspensePath) {
           if (workInProgress.flags & ForceClientRender) {
@@ -1758,8 +1758,8 @@ function completeWork(
                   workInProgress,
                   setShallowSuspenseListContext(
                     suspenseStackCursor.current,
-                    ForceSuspenseFallback,
-                  ),
+                    ForceSuspenseFallback
+                  )
                 );
                 if (getIsHydrating()) {
                   // Re-apply tree fork since we popped the tree fork context in the beginning of this function.
@@ -1813,8 +1813,8 @@ function completeWork(
             // This might have been modified.
             if (
               renderState.tail === null &&
-              renderState.tailMode !== 'collapsed' &&
-              renderState.tailMode !== 'visible' &&
+              renderState.tailMode !== "collapsed" &&
+              renderState.tailMode !== "visible" &&
               !renderedTail.alternate &&
               !getIsHydrating() // We don't cut it if we're hydrating.
             ) {
@@ -1883,15 +1883,15 @@ function completeWork(
         if (didSuspendAlready) {
           suspenseContext = setShallowSuspenseListContext(
             suspenseContext,
-            ForceSuspenseFallback,
+            ForceSuspenseFallback
           );
         } else {
           suspenseContext =
             setDefaultShallowSuspenseListContext(suspenseContext);
         }
         if (
-          renderState.tailMode === 'visible' ||
-          renderState.tailMode === 'collapsed' ||
+          renderState.tailMode === "visible" ||
+          renderState.tailMode === "collapsed" ||
           !onlyNewMounts ||
           // TODO: While hydrating, we still let it suspend the parent. Tail mode hidden has broken
           // hydration anyway right now but this preserves the previous semantics out of caution.
@@ -2072,8 +2072,8 @@ function completeWork(
 
   throw new Error(
     `Unknown unit of work tag (${workInProgress.tag}). This error is likely caused by a bug in ` +
-      'React. Please file an issue.',
+      "React. Please file an issue."
   );
 }
 
-export {completeWork};
+export { completeWork };

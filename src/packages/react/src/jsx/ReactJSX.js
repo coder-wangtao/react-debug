@@ -6,13 +6,13 @@
  *
  * @flow
  */
-import {REACT_FRAGMENT_TYPE} from 'shared/ReactSymbols';
+import { REACT_FRAGMENT_TYPE } from "shared/ReactSymbols";
 import {
   jsxProd,
   jsxProdSignatureRunningInDevWithDynamicChildren,
   jsxProdSignatureRunningInDevWithStaticChildren,
   jsxDEV as _jsxDEV,
-} from './ReactJSXElement';
+} from "./ReactJSXElement";
 
 const jsx: any = __DEV__
   ? jsxProdSignatureRunningInDevWithDynamicChildren
@@ -25,4 +25,4 @@ const jsxs: any = __DEV__
 
 const jsxDEV: any = __DEV__ ? _jsxDEV : undefined;
 
-export {REACT_FRAGMENT_TYPE as Fragment, jsx, jsxs, jsxDEV};
+export { REACT_FRAGMENT_TYPE as Fragment, jsx, jsxs, jsxDEV };

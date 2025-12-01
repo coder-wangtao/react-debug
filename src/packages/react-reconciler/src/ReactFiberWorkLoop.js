@@ -1042,8 +1042,8 @@ export function scheduleUpdateOnFiber(
       }
     }
 
+    //确保 Root是被调度
     ensureRootIsScheduled(root);
-    // 如果满足条件，立即刷新同步工作
 
     if (
       lane === SyncLane &&
@@ -1130,10 +1130,9 @@ export function performWorkOnRoot(
     // even for regular pings.
     checkIfRootIsPrerendering(root, lanes);
   let exitStatus: RootExitStatus = shouldTimeSlice
-    ? renderRootConcurrent(root, lanes)
-    : // 执行同步渲染 (Perform Synchronous Render)
-      // 调用 renderRootSync 函数，它会同步地遍历 Fiber 树，执行组件的 render 方法，
-      // 比较新旧 Fiber 节点，并构建 workInProgress 树。这个过程是不可中断的。
+    ? // 并发渲染(可中断)
+      renderRootConcurrent(root, lanes)
+    : // 同步渲染(不可中断)
       renderRootSync(root, lanes, true);
 
   let renderWasConcurrent = shouldTimeSlice;
@@ -1162,7 +1161,7 @@ export function performWorkOnRoot(
       }
       break;
     } else {
-      //TODO: 渲染结束...
+      //TODO: render阶段结束...
       let renderEndTime = 0;
       if (enableProfilerTimer && enableComponentPerformanceTrack) {
         renderEndTime = now();
@@ -1176,6 +1175,7 @@ export function performWorkOnRoot(
       // to the main thread, if it was fast enough, or if it expired. We could
       // skip the consistency check in that case, too.
       const finishedWork: Fiber = (root.current.alternate: any);
+      debugger;
       if (
         renderWasConcurrent &&
         !isRenderConsistentWithExternalStores(finishedWork)
@@ -1268,6 +1268,8 @@ export function performWorkOnRoot(
 
       // We now have a consistent tree. The next step is either to commit it,
       // or, if something suspended, wait to commit it after a timeout.
+      //TODO: 我们现在有一棵稳定的树。下一步是提交它，或者，如果有东西挂起，在时间结束后等待提交。
+
       finishConcurrentRender(
         root,
         exitStatus,
@@ -1625,6 +1627,7 @@ function commitRootWhenReady(
   }
 
   // Otherwise, commit immediately.;
+  //TODO: commit阶段
   commitRoot(
     root,
     finishedWork,
@@ -2192,7 +2195,9 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes): Fiber {
 
   resetWorkInProgressStack();
   workInProgressRoot = root;
+  //TODO: 开始创建WorkInProgress Tree
   const rootWorkInProgress = createWorkInProgress(root.current, null);
+  //TODO: 重要：赋值为workInProgress指针
   workInProgress = rootWorkInProgress;
   workInProgressRootRenderLanes = lanes;
   workInProgressSuspendedReason = NotSuspended;
@@ -2219,7 +2224,6 @@ function prepareFreshStack(root: FiberRoot, lanes: Lanes): Fiber {
   // and Sync lane in the same batch, but at Transition priority, because the
   // Sync lane already suspended.
   entangledRenderLanes = getEntangledLanes(root, lanes);
-
   finishQueueingConcurrentUpdates();
 
   if (__DEV__) {
@@ -2721,6 +2725,7 @@ function renderRootSync(
 /** @noinline */
 function workLoopSync() {
   // Perform work without checking if we need to yield between fiber.
+  //TODO:深度优先遍历
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress);
   }
@@ -3033,6 +3038,7 @@ function workLoopConcurrentByScheduler() {
 }
 
 function performUnitOfWork(unitOfWork: Fiber): void {
+  //TODO:debugger
   // The current, flushed, state of this fiber is the alternate. Ideally
   // nothing should rely on this, but relying on it here means that we don't
   // need an additional field on the work in progress.
@@ -3041,6 +3047,7 @@ function performUnitOfWork(unitOfWork: Fiber): void {
   let next;
   if (enableProfilerTimer && (unitOfWork.mode & ProfileMode) !== NoMode) {
     startProfilerTimer(unitOfWork);
+    //TODO: 原先是—__DEV__
     if (__DEV__) {
       next = runWithFiberInDEV(
         unitOfWork,
@@ -3686,6 +3693,7 @@ function commitRoot(
         if (pendingDelayedCommitReason === IMMEDIATE_COMMIT) {
           pendingDelayedCommitReason = DELAYED_PASSIVE_COMMIT;
         }
+        //TODO:4.Passive Effects阶段
         flushPassiveEffects();
         // This render triggered passive effects: release the root cache pool
         // *after* passive effects fire to avoid freeing a cache pool that may
@@ -3750,6 +3758,7 @@ function commitRoot(
       // 在实际 DOM 变更之前执行，主要用于读取 DOM 状态，
       // 例如执行类组件的 getSnapshotBeforeUpdate。
       // 也处理与 View Transitions 相关的准备工作。
+      //TODO:1.Before Mutation Effects
       commitBeforeMutationEffects(root, finishedWork, lanes);
     } finally {
       // Reset the priority to the previous non-sync value.
@@ -3794,7 +3803,9 @@ function commitRoot(
     );
   } else {
     // Flush synchronously.
+    //TODO:2.DOM Mutations阶段
     flushMutationEffects();
+    //TODO:3.Layout Effects阶段
     flushLayoutEffects();
     // Skip flushAfterMutationEffects
     flushSpawnedWork();
@@ -3912,6 +3923,7 @@ function flushMutationEffects(): void {
       // ---------------------------
       // 执行实际的 DOM 插入、更新、删除操作。
       // 这个阶段会遍历 Fiber 树，根据 flags 执行对应的 DOM API 调用。
+      debugger;
       commitMutationEffects(root, finishedWork, lanes);
 
       if (enableCreateEventHandleAPI) {

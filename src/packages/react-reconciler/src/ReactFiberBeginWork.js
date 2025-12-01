@@ -1477,7 +1477,6 @@ function updateFunctionComponent(
       }
     }
   }
-
   let context;
   if (!disableLegacyContext && !disableLegacyContextForFunctionComponents) {
     const unmaskedContext = getUnmaskedContext(workInProgress, Component, true);
@@ -1810,7 +1809,6 @@ function updateHostRoot(
   const prevChildren = prevState.element;
   cloneUpdateQueue(current, workInProgress);
   processUpdateQueue(workInProgress, nextProps, null, renderLanes);
-
   const nextState: RootState = workInProgress.memoizedState;
   const root: FiberRoot = workInProgress.stateNode;
   pushRootTransition(workInProgress, root, renderLanes);
@@ -1851,7 +1849,6 @@ function updateHostRoot(
     // have reducer functions so it doesn't need rebasing.
     updateQueue.baseState = overrideState;
     workInProgress.memoizedState = overrideState;
-
     if (workInProgress.flags & ForceClientRender) {
       // Something errored during a previous attempt to hydrate the shell, so we
       // forced a client render. We should have a recoverable error already scheduled.
@@ -1904,6 +1901,8 @@ function updateHostRoot(
     // Root is not dehydrated. Either this is a client-only root, or it
     // already hydrated.
     resetHydrationState();
+
+    //TODO: bailout 策略
     if (nextChildren === prevChildren) {
       return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
     }
@@ -1943,6 +1942,7 @@ function updateHostComponent(
   const prevProps = current !== null ? current.memoizedProps : null;
 
   let nextChildren = nextProps.children;
+  //
   const isDirectTextChild = shouldSetTextContent(type, nextProps);
 
   if (isDirectTextChild) {
@@ -1950,6 +1950,9 @@ function updateHostComponent(
     // case. We won't handle it as a reified child. We will instead handle
     // this in the host environment that also has access to this prop. That
     // avoids allocating another HostText fiber and traversing it.
+    // 我们对主机节点的直接文本子节点进行特殊处理。这是一个常见的案例。
+    // 我们不会把它当作一个具体化的孩子来处理。
+    // 我们将在也可以访问此道具的主机环境中处理此问题。这避免了分配另一根HostText光纤并遍历它。
     nextChildren = null;
   } else if (prevProps !== null && shouldSetTextContent(type, prevProps)) {
     // If we're switching from a direct text child to a normal child, or to
@@ -4141,6 +4144,7 @@ function beginWork(
   renderLanes: Lanes
 ): Fiber | null {
   if (__DEV__) {
+    //TODO:DEBUGGER
     if (workInProgress._debugNeedsRemount && current !== null) {
       // This will restart the begin phase with a new fiber.
       const copiedFiber = createFiberFromTypeAndProps(
@@ -4157,6 +4161,7 @@ function beginWork(
     }
   }
 
+  //TODO: bailout策略
   if (current !== null) {
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;

@@ -257,6 +257,7 @@ function processRootScheduleInImmediateTask() {
   processRootScheduleInMicrotask();
 }
 
+//在微任务中处理 Root 调度
 function processRootScheduleInMicrotask() {
   // This function is always called inside a microtask. It should never be
   // called synchronously.
@@ -479,10 +480,14 @@ function scheduleTaskForRootDuringMicrotask(
       cancelCallback(existingCallbackNode);
     }
     let schedulerPriorityLevel; // NormalSchedulerPriority
+    //TODO: 将 Lane 转换为 Scheduler 的优先级
     switch (lanesToEventPriority(nextLanes)) {
       // Scheduler does have an "ImmediatePriority", but now that we use
       // microtasks for sync work we no longer use that. Any sync work that
       // reaches this path is meant to be time sliced.
+      //Scheduler 有 ImmediatePriority 但是我们我们不再使用微任务处理同步工作
+      // 任何到达此路径的同步工作都意味着要进行时间切片。
+
       case DiscreteEventPriority:
       case ContinuousEventPriority:
         schedulerPriorityLevel = UserBlockingSchedulerPriority;
@@ -518,7 +523,6 @@ function performWorkOnRootViaSchedulerTask(
 ): RenderTaskFn | null {
   // This is the entry point for concurrent tasks scheduled via Scheduler (and
   // postTask, in the future).
-
   if (enableProfilerTimer && enableProfilerNestedUpdatePhase) {
     resetNestedUpdateFlag();
   }

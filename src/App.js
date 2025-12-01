@@ -19,21 +19,22 @@ import SchedulerTest from "@/components/scheduler-test";
 
 function App() {
   return (
-    <div id="app">
-      {/* <RefApp /> */}
-      {/* <Counter /> */}
-      {/* <UseEffectApp /> */}
-      {/* <UseIdApp /> */}
-      {/* <EmptyComponent /> */}
-      {/* <EventApp /> */}
-      {/* <PromiseApp /> */}
-      {/* <AsyncApp /> */}
+    // <div id="app">
+    //   {/* <RefApp /> */}
+    //   {/* <Counter /> */}
+    //   {/* <UseEffectApp /> */}
+    //   {/* <UseIdApp /> */}
+    //   {/* <EmptyComponent /> */}
+    //   {/* <EventApp /> */}
+    //   {/* <PromiseApp /> */}
+    //   {/* <AsyncApp /> */}
 
-      {/* <AutomaticApp /> */}
-      {/* <ConcurrentApp /> */}
-      {/* <Ref19 /> */}
-      <SchedulerTest />
-    </div>
+    //   {/* <AutomaticApp /> */}
+    //   {/* <ConcurrentApp /> */}
+    //   {/* <Ref19 /> */}
+    //   {/* <SchedulerTest /> */}
+    // </div>
+    <div>test</div>
   );
 }
 

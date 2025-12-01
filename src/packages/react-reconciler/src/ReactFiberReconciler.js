@@ -374,7 +374,9 @@ export function updateContainer(
 ): Lane {
   const current = container.current;
   //首次渲染 DefaultEventPriority
+
   const lane = requestUpdateLane(current);
+
   updateContainerImpl(
     current,
     lane,

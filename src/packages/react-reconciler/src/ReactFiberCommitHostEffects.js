@@ -15,8 +15,8 @@ import type {
   Container,
   ChildSet,
   FragmentInstanceType,
-} from './ReactFiberConfig';
-import type {Fiber, FiberRoot} from './ReactInternalTypes';
+} from "./ReactFiberConfig";
+import type { Fiber, FiberRoot } from "./ReactInternalTypes";
 
 import {
   HostRoot,
@@ -27,8 +27,8 @@ import {
   HostPortal,
   DehydratedFragment,
   Fragment,
-} from './ReactWorkTags';
-import {ContentReset, Placement} from './ReactFiberFlags';
+} from "./ReactWorkTags";
+import { ContentReset, Placement } from "./ReactFiberFlags";
 import {
   supportsMutation,
   supportsResources,
@@ -59,12 +59,12 @@ import {
   isSingletonScope,
   commitNewChildToFragmentInstance,
   deleteChildFromFragmentInstance,
-} from './ReactFiberConfig';
-import {captureCommitPhaseError} from './ReactFiberWorkLoop';
-import {trackHostMutation} from './ReactFiberMutationTracking';
+} from "./ReactFiberConfig";
+import { captureCommitPhaseError } from "./ReactFiberWorkLoop";
+import { trackHostMutation } from "./ReactFiberMutationTracking";
 
-import {runWithFiberInDEV} from './ReactCurrentFiber';
-import {enableFragmentRefs} from 'shared/ReactFeatureFlags';
+import { runWithFiberInDEV } from "./ReactCurrentFiber";
+import { enableFragmentRefs } from "shared/ReactFeatureFlags";
 
 export function commitHostMount(finishedWork: Fiber) {
   const type = finishedWork.type;
@@ -78,7 +78,7 @@ export function commitHostMount(finishedWork: Fiber) {
         instance,
         type,
         props,
-        finishedWork,
+        finishedWork
       );
     } else {
       commitMount(instance, type, props, finishedWork);
@@ -100,7 +100,7 @@ export function commitHostHydratedInstance(finishedWork: Fiber) {
         instance,
         type,
         props,
-        finishedWork,
+        finishedWork
       );
     } else {
       commitHydratedInstance(instance, type, props, finishedWork);
@@ -113,7 +113,7 @@ export function commitHostHydratedInstance(finishedWork: Fiber) {
 export function commitHostUpdate(
   finishedWork: Fiber,
   newProps: any,
-  oldProps: any,
+  oldProps: any
 ): void {
   try {
     if (__DEV__) {
@@ -124,7 +124,7 @@ export function commitHostUpdate(
         finishedWork.type,
         oldProps,
         newProps,
-        finishedWork,
+        finishedWork
       );
     } else {
       commitUpdate(
@@ -132,7 +132,7 @@ export function commitHostUpdate(
         finishedWork.type,
         oldProps,
         newProps,
-        finishedWork,
+        finishedWork
       );
     }
     // Mutations are tracked manually from within commitUpdate.
@@ -144,7 +144,7 @@ export function commitHostUpdate(
 export function commitHostTextUpdate(
   finishedWork: Fiber,
   newText: string,
-  oldText: string,
+  oldText: string
 ) {
   const textInstance: TextInstance = finishedWork.stateNode;
   try {
@@ -154,7 +154,7 @@ export function commitHostTextUpdate(
         commitTextUpdate,
         textInstance,
         oldText,
-        newText,
+        newText
       );
     } else {
       commitTextUpdate(textInstance, oldText, newText);
@@ -215,7 +215,7 @@ export function commitShowHideHostInstance(node: Fiber, isHidden: boolean) {
           node,
           unhideInstance,
           node.stateNode,
-          node.memoizedProps,
+          node.memoizedProps
         );
       } else {
         unhideInstance(node.stateNode, node.memoizedProps);
@@ -241,7 +241,7 @@ export function commitShowHideHostTextInstance(node: Fiber, isHidden: boolean) {
           node,
           unhideTextInstance,
           instance,
-          node.memoizedProps,
+          node.memoizedProps
         );
       } else {
         unhideTextInstance(instance, node.memoizedProps);
@@ -255,7 +255,7 @@ export function commitShowHideHostTextInstance(node: Fiber, isHidden: boolean) {
 
 export function commitNewChildToFragmentInstances(
   fiber: Fiber,
-  parentFragmentInstances: null | Array<FragmentInstanceType>,
+  parentFragmentInstances: null | Array<FragmentInstanceType>
 ): void {
   if (
     fiber.tag !== HostComponent ||
@@ -381,9 +381,9 @@ function insertOrAppendPlacementNodeIntoContainer(
   node: Fiber,
   before: ?Instance,
   parent: Container,
-  parentFragmentInstances: null | Array<FragmentInstanceType>,
+  parentFragmentInstances: null | Array<FragmentInstanceType>
 ): void {
-  const {tag} = node;
+  const { tag } = node;
   const isHost = tag === HostComponent || tag === HostText;
   if (isHost) {
     const stateNode = node.stateNode;
@@ -420,7 +420,7 @@ function insertOrAppendPlacementNodeIntoContainer(
       child,
       before,
       parent,
-      parentFragmentInstances,
+      parentFragmentInstances
     );
     let sibling = child.sibling;
     while (sibling !== null) {
@@ -428,7 +428,7 @@ function insertOrAppendPlacementNodeIntoContainer(
         sibling,
         before,
         parent,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
       sibling = sibling.sibling;
     }
@@ -439,9 +439,9 @@ function insertOrAppendPlacementNode(
   node: Fiber,
   before: ?Instance,
   parent: Instance,
-  parentFragmentInstances: null | Array<FragmentInstanceType>,
+  parentFragmentInstances: null | Array<FragmentInstanceType>
 ): void {
-  const {tag} = node;
+  const { tag } = node;
   const isHost = tag === HostComponent || tag === HostText;
   if (isHost) {
     const stateNode = node.stateNode;
@@ -480,7 +480,7 @@ function insertOrAppendPlacementNode(
         sibling,
         before,
         parent,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
       sibling = sibling.sibling;
     }
@@ -512,7 +512,7 @@ function commitPlacement(finishedWork: Fiber): void {
     if (enableFragmentRefs) {
       commitImmutablePlacementNodeToFragmentInstances(
         finishedWork,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
     }
     return;
@@ -520,8 +520,8 @@ function commitPlacement(finishedWork: Fiber): void {
 
   if (hostParentFiber == null) {
     throw new Error(
-      'Expected to find a host parent. This error is likely caused by a bug ' +
-        'in React. Please file an issue.',
+      "Expected to find a host parent. This error is likely caused by a bug " +
+        "in React. Please file an issue."
     );
   }
 
@@ -536,7 +536,7 @@ function commitPlacement(finishedWork: Fiber): void {
           finishedWork,
           before,
           parent,
-          parentFragmentInstances,
+          parentFragmentInstances
         );
         break;
       }
@@ -558,7 +558,7 @@ function commitPlacement(finishedWork: Fiber): void {
         finishedWork,
         before,
         parent,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
       break;
     }
@@ -566,25 +566,26 @@ function commitPlacement(finishedWork: Fiber): void {
     case HostPortal: {
       const parent: Container = hostParentFiber.stateNode.containerInfo;
       const before = getHostSibling(finishedWork);
+      //插入真实dom
       insertOrAppendPlacementNodeIntoContainer(
         finishedWork,
         before,
         parent,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
       break;
     }
     default:
       throw new Error(
-        'Invalid host parent fiber. This error is likely caused by a bug ' +
-          'in React. Please file an issue.',
+        "Invalid host parent fiber. This error is likely caused by a bug " +
+          "in React. Please file an issue."
       );
   }
 }
 
 function commitImmutablePlacementNodeToFragmentInstances(
   finishedWork: Fiber,
-  parentFragmentInstances: null | Array<FragmentInstanceType>,
+  parentFragmentInstances: null | Array<FragmentInstanceType>
 ): void {
   if (!enableFragmentRefs) {
     return;
@@ -604,13 +605,13 @@ function commitImmutablePlacementNodeToFragmentInstances(
   if (child !== null) {
     commitImmutablePlacementNodeToFragmentInstances(
       child,
-      parentFragmentInstances,
+      parentFragmentInstances
     );
     let sibling = child.sibling;
     while (sibling !== null) {
       commitImmutablePlacementNodeToFragmentInstances(
         sibling,
-        parentFragmentInstances,
+        parentFragmentInstances
       );
       sibling = sibling.sibling;
     }
@@ -633,7 +634,7 @@ export function commitHostRemoveChildFromContainer(
   deletedFiber: Fiber,
   nearestMountedAncestor: Fiber,
   parentContainer: Container,
-  hostInstance: Instance | TextInstance,
+  hostInstance: Instance | TextInstance
 ) {
   try {
     if (__DEV__) {
@@ -641,7 +642,7 @@ export function commitHostRemoveChildFromContainer(
         deletedFiber,
         removeChildFromContainer,
         parentContainer,
-        hostInstance,
+        hostInstance
       );
     } else {
       removeChildFromContainer(parentContainer, hostInstance);
@@ -656,7 +657,7 @@ export function commitHostRemoveChild(
   deletedFiber: Fiber,
   nearestMountedAncestor: Fiber,
   parentInstance: Instance,
-  hostInstance: Instance | TextInstance,
+  hostInstance: Instance | TextInstance
 ) {
   try {
     if (__DEV__) {
@@ -664,7 +665,7 @@ export function commitHostRemoveChild(
         deletedFiber,
         removeChild,
         parentInstance,
-        hostInstance,
+        hostInstance
       );
     } else {
       removeChild(parentInstance, hostInstance);
@@ -677,7 +678,7 @@ export function commitHostRemoveChild(
 
 export function commitHostRootContainerChildren(
   root: FiberRoot,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ) {
   const containerInfo = root.containerInfo;
   const pendingChildren = root.pendingChildren;
@@ -687,7 +688,7 @@ export function commitHostRootContainerChildren(
         finishedWork,
         replaceContainerChildren,
         containerInfo,
-        pendingChildren,
+        pendingChildren
       );
     } else {
       replaceContainerChildren(containerInfo, pendingChildren);
@@ -705,7 +706,7 @@ export function commitHostPortalContainerChildren(
     ...
   },
   finishedWork: Fiber,
-  pendingChildren: ChildSet,
+  pendingChildren: ChildSet
 ) {
   const containerInfo = portal.containerInfo;
   try {
@@ -714,7 +715,7 @@ export function commitHostPortalContainerChildren(
         finishedWork,
         replaceContainerChildren,
         containerInfo,
-        pendingChildren,
+        pendingChildren
       );
     } else {
       replaceContainerChildren(containerInfo, pendingChildren);
@@ -726,14 +727,14 @@ export function commitHostPortalContainerChildren(
 
 export function commitHostHydratedContainer(
   root: FiberRoot,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ) {
   try {
     if (__DEV__) {
       runWithFiberInDEV(
         finishedWork,
         commitHydratedContainer,
-        root.containerInfo,
+        root.containerInfo
       );
     } else {
       commitHydratedContainer(root.containerInfo);
@@ -745,14 +746,14 @@ export function commitHostHydratedContainer(
 
 export function commitHostHydratedActivity(
   activityInstance: ActivityInstance,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ) {
   try {
     if (__DEV__) {
       runWithFiberInDEV(
         finishedWork,
         commitHydratedActivityInstance,
-        activityInstance,
+        activityInstance
       );
     } else {
       commitHydratedActivityInstance(activityInstance);
@@ -764,14 +765,14 @@ export function commitHostHydratedActivity(
 
 export function commitHostHydratedSuspense(
   suspenseInstance: SuspenseInstance,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ) {
   try {
     if (__DEV__) {
       runWithFiberInDEV(
         finishedWork,
         commitHydratedSuspenseInstance,
-        suspenseInstance,
+        suspenseInstance
       );
     } else {
       commitHydratedSuspenseInstance(suspenseInstance);
@@ -794,14 +795,14 @@ export function commitHostSingletonAcquisition(finishedWork: Fiber) {
         finishedWork.type,
         props,
         singleton,
-        finishedWork,
+        finishedWork
       );
     } else {
       acquireSingletonInstance(
         finishedWork.type,
         props,
         singleton,
-        finishedWork,
+        finishedWork
       );
     }
   } catch (error) {
@@ -814,7 +815,7 @@ export function commitHostSingletonRelease(releasingWork: Fiber) {
     runWithFiberInDEV(
       releasingWork,
       releaseSingletonInstance,
-      releasingWork.stateNode,
+      releasingWork.stateNode
     );
   } else {
     releaseSingletonInstance(releasingWork.stateNode);
