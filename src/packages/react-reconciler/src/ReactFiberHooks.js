@@ -1258,6 +1258,8 @@ function mountReducer<S, I, A>(
   initialArg: I,
   init?: (I) => S
 ): [S, Dispatch<A>] {
+  // hooks的初始化
+  // 上面的hook会形成一个链表 workInProgressHook 指向最后一个hook，
   const hook = mountWorkInProgressHook();
   let initialState;
   if (init !== undefined) {
@@ -1949,6 +1951,7 @@ function mountOptimistic<S, A>(
   passthrough: S,
   reducer: ?(S, A) => S
 ): [S, (A) => void] {
+  // 主要用于 初始化乐观状态和更新函数。
   const hook = mountWorkInProgressHook();
   hook.memoizedState = hook.baseState = passthrough;
   const queue: UpdateQueue<S, A> = {
@@ -1964,7 +1967,7 @@ function mountOptimistic<S, A>(
   const dispatch: (A) => void = (dispatchOptimisticSetState.bind(
     null,
     currentlyRenderingFiber,
-    true,
+    true, // 表示这是一个乐观更新
     queue
   ): any);
   queue.dispatch = dispatch;
@@ -1979,8 +1982,8 @@ function updateOptimistic<S, A>(
   return updateOptimisticImpl(
     hook,
     ((currentHook: any): Hook),
-    passthrough,
-    reducer
+    passthrough, // 用户传入的当前状态值
+    reducer // 用于处理状态更新的 reducer 函数
   );
 }
 
@@ -1996,8 +1999,10 @@ function updateOptimisticImpl<S, A>(
   //
   // Reset the base state to the passthrough. Future updates will be applied
   // on top of this.
+  // 同步基础状态
   hook.baseState = passthrough;
 
+  // 解析reducer函数
   // If a reducer is not provided, default to the same one used by useState.
   const resolvedReducer: (S, A) => S =
     typeof reducer === "function" ? reducer : (basicStateReducer: any);
@@ -2357,6 +2362,7 @@ function mountActionState<S, P>(
   initialStateProp: Awaited<S>,
   permalink?: string
 ): [Awaited<S>, (P) => void, boolean] {
+  debugger;
   let initialState: Awaited<S> = initialStateProp;
   if (getIsHydrating()) {
     const root: FiberRoot = (getWorkInProgressRoot(): any);
@@ -2388,6 +2394,7 @@ function mountActionState<S, P>(
     lastRenderedState: initialState,
   };
   stateHook.queue = stateQueue;
+
   const setState: Dispatch<S | Awaited<S>> = (dispatchSetState.bind(
     null,
     currentlyRenderingFiber,
@@ -2614,7 +2621,9 @@ function mountEffectImpl(
   create: () => (() => void) | void,
   deps: Array<mixed> | void | null
 ): void {
+  // 1. 创建新的 Hook 节点（工作进度中的 Hook）
   const hook = mountWorkInProgressHook();
+  // 2. 保存 create 函数引用（实际会做依赖收集，此处简化）
   const nextDeps = deps === undefined ? null : deps;
   currentlyRenderingFiber.flags |= fiberFlags;
   hook.memoizedState = pushSimpleEffect(
@@ -2819,6 +2828,10 @@ function imperativeHandleEffect<T>(
     };
   }
 }
+// ref - 父组件传递的 ref 对象
+// create - 返回要暴露给父组件的对象的工厂函数
+// deps - 依赖项数组（决定何时更新暴露的对象）
+// 挂载阶段：创建并注册 ImperativeHandle
 
 function mountImperativeHandle<T>(
   ref: { current: T | null } | ((inst: T | null) => mixed) | null | void,
@@ -2964,6 +2977,7 @@ function mountDeferredValue<T>(value: T, initialValue?: T): T {
 function updateDeferredValue<T>(value: T, initialValue?: T): T {
   const hook = updateWorkInProgressHook();
   const resolvedCurrentHook: Hook = (currentHook: any);
+  // 获取之前的value值
   const prevValue: T = resolvedCurrentHook.memoizedState;
   return updateDeferredValueImpl(hook, prevValue, value, initialValue);
 }
@@ -3017,7 +3031,7 @@ function mountDeferredValueImpl<T>(hook: Hook, value: T, initialValue?: T): T {
 
     return initialValue;
   } else {
-    hook.memoizedState = value;
+    hook.memoizedState = value; // mount阶段并不会对deferredValue的更新进行延迟操作
     return value;
   }
 }
@@ -3028,6 +3042,7 @@ function updateDeferredValueImpl<T>(
   value: T,
   initialValue?: T
 ): T {
+  // 如果这次渲染的value和之前的value值相等，则不用进行任何处理，直接返回即可
   if (is(value, prevValue)) {
     // The incoming value is referentially identical to the currently rendered
     // value, so we can bail out quickly.
@@ -3047,6 +3062,10 @@ function updateDeferredValueImpl<T>(
       }
       return resultValue;
     }
+    // 否则，判断当前这次渲染是紧急渲染还是非紧急渲染
+    //如果当前渲染是紧急更新即有其他更紧急的任务要执行，优先其他任务执行，
+    // 不要更新deferredValue的值。所以通过requestDeferredLane获取一个deferredLane，并标记Fiber的lanes，
+    // 使得Fiber知道它的节点上有一个非紧急更新等之后再执行，并返回之前的value，没有改变deferredValue
 
     const shouldDeferValue =
       !includesOnlyNonUrgentLanes(renderLanes) && !isRenderingDeferredWork();
@@ -3444,18 +3463,23 @@ function useHostTransitionStatus(): TransitionStatus {
 }
 
 function mountId(): string {
+  //创建 hook 对象，将 hook 对象添加到 workInProgressHook 单向链表中，返回最新的 hook 链表
   const hook = mountWorkInProgressHook();
-
+  //getWorkInProgressRoot() 方法获取当前的 FiberRoot 对象
   const root = ((getWorkInProgressRoot(): any): FiberRoot);
   // TODO: In Fizz, id generation is specific to each server config. Maybe we
   // should do this in Fiber, too? Deferring this decision for now because
   // there's no other place to store the prefix except for an internal field on
   // the public createRoot object, which the fiber tree does not currently have
   // a reference to.
+  //从 FiberRoot 对象 上获取id前缀
   const identifierPrefix = root.identifierPrefix;
 
   let id;
+  // 调用 getIsHydrating() 方法判断是服务端渲染还是客户端渲染
   if (getIsHydrating()) {
+    //服务端渲染注水（hydrate）阶段生成的唯一 id，以冒号开头，并以冒号结尾，使用大写字母 R 标识该id是服务端渲染生成的id
+    //获取组件树的id
     const treeId = getTreeId();
 
     // Use a captial R prefix for server-generated ids.
@@ -3464,6 +3488,7 @@ function mountId(): string {
     // Unless this is the first id at this level, append a number at the end
     // that represents the position of this useId hook among all the useId
     // hooks for this fiber.
+    // localIdCounter 变量记录组件中 useId 的执行次数
     const localId = localIdCounter++;
     if (localId > 0) {
       id += "H" + localId.toString(32);
@@ -3472,16 +3497,20 @@ function mountId(): string {
     id += "_";
   } else {
     // Use a lowercase r prefix for client-generated ids.
+    //客户端渲染生成的唯一 id，以冒号开头，并以冒号结尾，使用小写字母 r 标识该id 是客户端渲染生成的id
+    //全局变量 globalClientIdCounter 记录 useId hook 在组件中的调用次数
     const globalClientId = globalClientIdCounter++;
     id = "_" + identifierPrefix + "r_" + globalClientId.toString(32) + "_";
   }
-
+  // 将生成的唯一 id 存储到 hook 对象的 memoizedState 属性上
   hook.memoizedState = id;
   return id;
 }
 
 function updateId(): string {
+  // 获取当前的 workInProgressHook
   const hook = updateWorkInProgressHook();
+  // 从当前的 workInProgressHook 上获取 useId 生成的 id，因此即使组件重新渲染，id 也不会变化
   const id: string = hook.memoizedState;
   return id;
 }
@@ -3584,6 +3613,7 @@ function dispatchReducerAction<S, A>(
     const root = enqueueConcurrentHookUpdate(fiber, queue, update, lane);
     if (root !== null) {
       startUpdateTimerByLane(lane, "dispatch()", fiber);
+      // 进入react的调度更新，会重新进入renderWithHooks
       scheduleUpdateOnFiber(root, fiber, lane);
       entangleTransitionUpdate(root, queue, lane);
     }
@@ -3745,18 +3775,19 @@ function dispatchOptimisticSetState<S, A>(
     enableGestureTransition && transition !== null && transition.gesture
       ? GestureLane
       : SyncLane;
+  // 创建更新对象
   const update: Update<S, A> = {
-    lane: lane,
+    lane: lane, // 使用同步优先级，确保更新立即执行（UI 即时响应）。
     // After committing, the optimistic update is "reverted" using the same
     // lane as the transition it's associated with.
     revertLane: requestTransitionLane(transition),
     gesture: null,
-    action,
+    action, // 用户传入的更新动作（如 {type: 'increment'}）
     hasEagerState: false,
     eagerState: null,
     next: (null: any),
   };
-
+  // 禁止在渲染过程中更新状态
   if (isRenderPhaseUpdate(fiber)) {
     // When calling startTransition during render, this warns instead of
     // throwing because throwing would be a breaking change. setOptimisticState
@@ -3780,6 +3811,7 @@ function dispatchOptimisticSetState<S, A>(
       // holds because the optimistic update is always synchronous. If we ever
       // change that, we'll need to account for this.
       startUpdateTimerByLane(lane, "setOptimistic()", fiber);
+      // 触发 React 的调度流程，使用 SyncLane 确保同步执行
       scheduleUpdateOnFiber(root, fiber, lane);
       // Optimistic updates are always synchronous, so we don't need to call
       // entangleTransitionUpdate here.

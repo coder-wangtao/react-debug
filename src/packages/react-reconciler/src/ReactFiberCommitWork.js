@@ -2007,7 +2007,6 @@ function commitMutationEffectsOnFiber(
     case ForwardRef:
     case MemoComponent:
     case SimpleMemoComponent: {
-      debugger;
       recursivelyTraverseMutationEffects(root, finishedWork, lanes);
       commitReconciliationEffects(finishedWork, lanes);
 

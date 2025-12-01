@@ -705,9 +705,9 @@ export function dispatchEventForPluginEventSystem(
     }
   }
   // TODO: only to debugger
-  if (domEventName !== "click") {
-    return;
-  }
+  // if (domEventName !== "click") {
+  //   return;
+  // }
   batchedUpdates(() =>
     dispatchEventsForPlugins(
       domEventName,

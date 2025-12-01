@@ -16,7 +16,7 @@ function TaskList() {
         //先更新乐观值
         addOptimistic(task);
         //调接口
-        await fakeApi(task);        
+        await fakeApi(task);
         //再更新真实值
         setTasks((current) => [...current, task]);
       } catch (error) {

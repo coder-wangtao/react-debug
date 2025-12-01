@@ -1175,7 +1175,6 @@ export function performWorkOnRoot(
       // to the main thread, if it was fast enough, or if it expired. We could
       // skip the consistency check in that case, too.
       const finishedWork: Fiber = (root.current.alternate: any);
-      debugger;
       if (
         renderWasConcurrent &&
         !isRenderConsistentWithExternalStores(finishedWork)
@@ -3923,7 +3922,6 @@ function flushMutationEffects(): void {
       // ---------------------------
       // 执行实际的 DOM 插入、更新、删除操作。
       // 这个阶段会遍历 Fiber 树，根据 flags 执行对应的 DOM API 调用。
-      debugger;
       commitMutationEffects(root, finishedWork, lanes);
 
       if (enableCreateEventHandleAPI) {
