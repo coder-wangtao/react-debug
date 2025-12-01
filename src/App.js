@@ -17,24 +17,23 @@ import ConcurrentApp from "@/components/batching/Concurrent";
 import EventTest from "@/components/event-test";
 import SchedulerTest from "@/components/scheduler-test";
 
-function App() {
-  return (
-    // <div id="app">
-    //   {/* <RefApp /> */}
-    //   {/* <Counter /> */}
-    //   {/* <UseEffectApp /> */}
-    //   {/* <UseIdApp /> */}
-    //   {/* <EmptyComponent /> */}
-    //   {/* <EventApp /> */}
-    //   {/* <PromiseApp /> */}
-    //   {/* <AsyncApp /> */}
+import React, { useState } from "react";
 
-    //   {/* <AutomaticApp /> */}
-    //   {/* <ConcurrentApp /> */}
-    //   {/* <Ref19 /> */}
-    //   {/* <SchedulerTest /> */}
-    // </div>
-    <div>test</div>
+function App() {
+  const [arr, setArr] = useState(["1", "2", "3"]);
+  function handleClick() {
+    setArr(["2", "3", "1"]);
+  }
+
+  return (
+    <div>
+      <h2 onClick={handleClick}>点我改变数组</h2>
+      <ul>
+        {arr.map((item) => {
+          return <li key={item}>{item}</li>;
+        })}
+      </ul>
+    </div>
   );
 }
 

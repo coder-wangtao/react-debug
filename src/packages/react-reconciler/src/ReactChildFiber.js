@@ -1121,7 +1121,7 @@ function createChildReconciler(
     }
     return knownKeys;
   }
-
+  //TODO:diff算法
   function reconcileChildrenArray(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
