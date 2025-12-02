@@ -2358,11 +2358,10 @@ function actionStateReducer<S>(oldState: S, newState: S): S {
 }
 
 function mountActionState<S, P>(
-  action: (Awaited<S>, P) => S,
-  initialStateProp: Awaited<S>,
+  action: (Awaited<S>, P) => S, //传入的更新函数
+  initialStateProp: Awaited<S>, //初始状态
   permalink?: string
 ): [Awaited<S>, (P) => void, boolean] {
-  debugger;
   let initialState: Awaited<S> = initialStateProp;
   if (getIsHydrating()) {
     const root: FiberRoot = (getWorkInProgressRoot(): any);
@@ -3891,7 +3890,6 @@ function markUpdateInDevTools<A>(fiber: Fiber, lane: Lane, action: A): void {
 
 export const ContextOnlyDispatcher: Dispatcher = {
   readContext,
-
   use,
   useCallback: throwInvalidHookError,
   useContext: throwInvalidHookError,
@@ -3921,7 +3919,6 @@ if (enableUseEffectEventHook) {
 
 const HooksDispatcherOnMount: Dispatcher = {
   readContext,
-
   use,
   useCallback: mountCallback,
   useContext: readContext,

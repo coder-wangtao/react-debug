@@ -7,23 +7,23 @@
  * @flow
  */
 
-import type {ViewTransitionProps} from 'shared/ReactTypes';
-import type {Instance, InstanceMeasurement, Props} from './ReactFiberConfig';
-import type {Fiber} from './ReactInternalTypes';
-import type {ViewTransitionState} from './ReactFiberViewTransitionComponent';
+import type { ViewTransitionProps } from "shared/ReactTypes";
+import type { Instance, InstanceMeasurement, Props } from "./ReactFiberConfig";
+import type { Fiber } from "./ReactInternalTypes";
+import type { ViewTransitionState } from "./ReactFiberViewTransitionComponent";
 
 import {
   HostComponent,
   OffscreenComponent,
   ViewTransitionComponent,
-} from './ReactWorkTags';
+} from "./ReactWorkTags";
 import {
   NoFlags,
   Update,
   ViewTransitionStatic,
   AffectedParentLayout,
   ViewTransitionNamedStatic,
-} from './ReactFiberFlags';
+} from "./ReactFiberFlags";
 import {
   supportsMutation,
   applyViewTransitionName,
@@ -33,17 +33,17 @@ import {
   hasInstanceChanged,
   hasInstanceAffectedParent,
   wasInstanceInViewport,
-} from './ReactFiberConfig';
-import {scheduleViewTransitionEvent} from './ReactFiberWorkLoop';
+} from "./ReactFiberConfig";
+import { scheduleViewTransitionEvent } from "./ReactFiberWorkLoop";
 import {
   getViewTransitionName,
   getViewTransitionClassName,
-} from './ReactFiberViewTransitionComponent';
-import {trackAnimatingTask} from './ReactProfilerTimer';
+} from "./ReactFiberViewTransitionComponent";
+import { trackAnimatingTask } from "./ReactProfilerTimer";
 import {
   enableComponentPerformanceTrack,
   enableProfilerTimer,
-} from 'shared/ReactFeatureFlags';
+} from "shared/ReactFeatureFlags";
 
 export let shouldStartViewTransition: boolean = false;
 
@@ -62,7 +62,7 @@ export function resetAppearingViewTransitions(): void {
 
 export function trackAppearingViewTransition(
   name: string,
-  state: ViewTransitionState,
+  state: ViewTransitionState
 ): void {
   if (appearingViewTransitions === null) {
     appearingViewTransitions = new Map();
@@ -87,11 +87,11 @@ export function trackEnterViewTransitions(placement: Fiber): void {
 // We can't cancel view transition children until we know that their parent also
 // don't need to transition.
 export let viewTransitionCancelableChildren: null | Array<
-  Instance | string | Props,
+  Instance | string | Props
 > = null; // tupled array where each entry is [instance: Instance, oldName: string, props: Props]
 
 export function pushViewTransitionCancelableScope(): null | Array<
-  Instance | string | Props,
+  Instance | string | Props
 > {
   const prevChildren = viewTransitionCancelableChildren;
   viewTransitionCancelableChildren = null;
@@ -99,7 +99,7 @@ export function pushViewTransitionCancelableScope(): null | Array<
 }
 
 export function popViewTransitionCancelableScope(
-  prevChildren: null | Array<Instance | string | Props>,
+  prevChildren: null | Array<Instance | string | Props>
 ): void {
   viewTransitionCancelableChildren = prevChildren;
 }
@@ -111,7 +111,7 @@ function applyViewTransitionToHostInstances(
   name: string,
   className: ?string,
   collectMeasurements: null | Array<InstanceMeasurement>,
-  stopAtNestedViewTransitions: boolean,
+  stopAtNestedViewTransitions: boolean
 ): boolean {
   viewTransitionHostInstanceIdx = 0;
   const inViewport = applyViewTransitionToHostInstancesRecursive(
@@ -119,7 +119,7 @@ function applyViewTransitionToHostInstances(
     name,
     className,
     collectMeasurements,
-    stopAtNestedViewTransitions,
+    stopAtNestedViewTransitions
   );
   if (enableProfilerTimer && enableComponentPerformanceTrack && inViewport) {
     if (fiber._debugTask != null) {
@@ -134,7 +134,7 @@ function applyViewTransitionToHostInstancesRecursive(
   name: string,
   className: ?string,
   collectMeasurements: null | Array<InstanceMeasurement>,
-  stopAtNestedViewTransitions: boolean,
+  stopAtNestedViewTransitions: boolean
 ): boolean {
   if (!supportsMutation) {
     return false;
@@ -161,8 +161,8 @@ function applyViewTransitionToHostInstancesRecursive(
           ? name
           : // If we have multiple Host Instances below, we add a suffix to the name to give
             // each one a unique name.
-            name + '_' + viewTransitionHostInstanceIdx,
-        className,
+            name + "_" + viewTransitionHostInstanceIdx,
+        className
       );
       viewTransitionHostInstanceIdx++;
     } else if (
@@ -183,7 +183,7 @@ function applyViewTransitionToHostInstancesRecursive(
           name,
           className,
           collectMeasurements,
-          stopAtNestedViewTransitions,
+          stopAtNestedViewTransitions
         )
       ) {
         inViewport = true;
@@ -196,7 +196,7 @@ function applyViewTransitionToHostInstancesRecursive(
 
 function restoreViewTransitionOnHostInstances(
   child: null | Fiber,
-  stopAtNestedViewTransitions: boolean,
+  stopAtNestedViewTransitions: boolean
 ): void {
   if (!supportsMutation) {
     return;
@@ -219,7 +219,7 @@ function restoreViewTransitionOnHostInstances(
     } else {
       restoreViewTransitionOnHostInstances(
         child.child,
-        stopAtNestedViewTransitions,
+        stopAtNestedViewTransitions
       );
     }
     child = child.sibling;
@@ -244,17 +244,17 @@ function commitAppearingPairViewTransitions(placement: Fiber): void {
         const instance: ViewTransitionState = child.stateNode;
         if (instance.paired) {
           const props: ViewTransitionProps = child.memoizedProps;
-          if (props.name == null || props.name === 'auto') {
+          if (props.name == null || props.name === "auto") {
             throw new Error(
-              'Found a pair with an auto name. This is a bug in React.',
+              "Found a pair with an auto name. This is a bug in React."
             );
           }
           const name = props.name;
           const className: ?string = getViewTransitionClassName(
             props.default,
-            props.share,
+            props.share
           );
-          if (className !== 'none') {
+          if (className !== "none") {
             // We found a new appearing view transition with the same name as this deletion.
             // We'll transition between them.
             const inViewport = applyViewTransitionToHostInstances(
@@ -262,7 +262,7 @@ function commitAppearingPairViewTransitions(placement: Fiber): void {
               name,
               className,
               null,
-              false,
+              false
             );
             if (!inViewport) {
               // This boundary is exiting within the viewport but is going to leave the viewport.
@@ -283,7 +283,7 @@ function commitAppearingPairViewTransitions(placement: Fiber): void {
 
 export function commitEnterViewTransitions(
   placement: Fiber,
-  gesture: boolean,
+  gesture: boolean
 ): void {
   if (placement.tag === ViewTransitionComponent) {
     const state: ViewTransitionState = placement.stateNode;
@@ -291,15 +291,15 @@ export function commitEnterViewTransitions(
     const name = getViewTransitionName(props, state);
     const className: ?string = getViewTransitionClassName(
       props.default,
-      state.paired ? props.share : props.enter,
+      state.paired ? props.share : props.enter
     );
-    if (className !== 'none') {
+    if (className !== "none") {
       const inViewport = applyViewTransitionToHostInstances(
         placement,
         name,
         className,
         null,
-        false,
+        false
       );
       if (!inViewport) {
         // TODO: If this was part of a pair we will still run the onShare callback.
@@ -356,21 +356,21 @@ function commitDeletedPairViewTransitions(deletion: Fiber): void {
       ) {
         const props: ViewTransitionProps = child.memoizedProps;
         const name = props.name;
-        if (name != null && name !== 'auto') {
+        if (name != null && name !== "auto") {
           const pair = pairs.get(name);
           if (pair !== undefined) {
             const className: ?string = getViewTransitionClassName(
               props.default,
-              props.share,
+              props.share
             );
-            if (className !== 'none') {
+            if (className !== "none") {
               // We found a new appearing view transition with the same name as this deletion.
               const inViewport = applyViewTransitionToHostInstances(
                 child,
                 name,
                 className,
                 null,
-                false,
+                false
               );
               if (!inViewport) {
                 // This boundary is not in the viewport so we won't treat it as a matched pair.
@@ -413,15 +413,15 @@ export function commitExitViewTransitions(deletion: Fiber): void {
         : undefined;
     const className: ?string = getViewTransitionClassName(
       props.default,
-      pair !== undefined ? props.share : props.exit,
+      pair !== undefined ? props.share : props.exit
     );
-    if (className !== 'none') {
+    if (className !== "none") {
       const inViewport = applyViewTransitionToHostInstances(
         deletion,
         name,
         className,
         null,
-        false,
+        false
       );
       if (!inViewport) {
         // Revert the transition names. This boundary is not in the viewport
@@ -465,7 +465,7 @@ export function commitExitViewTransitions(deletion: Fiber): void {
 
 export function commitBeforeUpdateViewTransition(
   current: Fiber,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ): void {
   // The way we deal with multiple HostInstances as children of a View Transition in an
   // update can get tricky. The important bit is that if you swap out n HostInstances
@@ -494,9 +494,9 @@ export function commitBeforeUpdateViewTransition(
   // it was not actually an update. Which is a bug.
   const className: ?string = getViewTransitionClassName(
     newProps.default,
-    newProps.update,
+    newProps.update
   );
-  if (className === 'none') {
+  if (className === "none") {
     // If update is "none" then we don't have to apply a name. Since we won't animate this boundary.
     return;
   }
@@ -505,7 +505,7 @@ export function commitBeforeUpdateViewTransition(
     oldName,
     className,
     (current.memoizedState = []),
-    true,
+    true
   );
 }
 
@@ -519,7 +519,7 @@ export function commitNestedViewTransitions(changedParent: Fiber): void {
       const name = getViewTransitionName(props, child.stateNode);
       const className: ?string = getViewTransitionClassName(
         props.default,
-        props.update,
+        props.update
       );
       // "Nested" view transitions are in subtrees that didn't update so
       // this is a "current". We normally clear this upon rerendering
@@ -527,13 +527,13 @@ export function commitNestedViewTransitions(changedParent: Fiber): void {
       // So we need it to be cleared before we do that.
       // TODO: Use some other temporary state to track this.
       child.flags &= ~Update;
-      if (className !== 'none') {
+      if (className !== "none") {
         applyViewTransitionToHostInstances(
           child,
           name,
           className,
           (child.memoizedState = []),
-          false,
+          false
         );
       }
     } else if ((child.subtreeFlags & ViewTransitionStatic) !== NoFlags) {
@@ -588,7 +588,7 @@ export function restoreEnterOrExitViewTransitions(fiber: Fiber): void {
 
 export function restoreUpdateViewTransition(
   current: Fiber,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ): void {
   restoreViewTransitionOnHostInstances(current.child, true);
   restoreViewTransitionOnHostInstances(finishedWork.child, true);
@@ -596,7 +596,7 @@ export function restoreUpdateViewTransition(
 
 export function restoreUpdateViewTransitionForGesture(
   current: Fiber,
-  finishedWork: Fiber,
+  finishedWork: Fiber
 ): void {
   // For gestures we don't need to reset "finishedWork" because those would
   // have all been clones that got deleted.
@@ -622,7 +622,7 @@ export function measureViewTransitionHostInstances(
   oldName: string,
   className: ?string,
   previousMeasurements: null | Array<InstanceMeasurement>,
-  stopAtNestedViewTransitions: boolean,
+  stopAtNestedViewTransitions: boolean
 ): boolean {
   viewTransitionHostInstanceIdx = 0;
   return measureViewTransitionHostInstancesRecursive(
@@ -632,7 +632,7 @@ export function measureViewTransitionHostInstances(
     oldName,
     className,
     previousMeasurements,
-    stopAtNestedViewTransitions,
+    stopAtNestedViewTransitions
   );
 }
 
@@ -643,7 +643,7 @@ function measureViewTransitionHostInstancesRecursive(
   oldName: string,
   className: ?string,
   previousMeasurements: null | Array<InstanceMeasurement>,
-  stopAtNestedViewTransitions: boolean,
+  stopAtNestedViewTransitions: boolean
 ): boolean {
   if (!supportsMutation) {
     return true;
@@ -696,8 +696,8 @@ function measureViewTransitionHostInstancesRecursive(
             ? newName
             : // If we have multiple Host Instances below, we add a suffix to the name to give
               // each one a unique name.
-              newName + '_' + viewTransitionHostInstanceIdx,
-          className,
+              newName + "_" + viewTransitionHostInstanceIdx,
+          className
         );
       }
       if (!inViewport || (parentViewTransition.flags & Update) === NoFlags) {
@@ -712,7 +712,7 @@ function measureViewTransitionHostInstancesRecursive(
         viewTransitionCancelableChildren.push(
           instance,
           oldName,
-          child.memoizedProps,
+          child.memoizedProps
         );
       }
       viewTransitionHostInstanceIdx++;
@@ -738,7 +738,7 @@ function measureViewTransitionHostInstancesRecursive(
           oldName,
           className,
           previousMeasurements,
-          stopAtNestedViewTransitions,
+          stopAtNestedViewTransitions
         )
       ) {
         inViewport = true;
@@ -752,7 +752,7 @@ function measureViewTransitionHostInstancesRecursive(
 export function measureUpdateViewTransition(
   current: Fiber,
   finishedWork: Fiber,
-  gesture: boolean,
+  gesture: boolean
 ): boolean {
   // If this was a gesture then which Fiber was used for the "old" vs "new" state is reversed.
   // We still need to treat "finishedWork" as the Fiber that contains the flags for this commmit.
@@ -765,9 +765,9 @@ export function measureUpdateViewTransition(
   // Whether it ends up having been updated or relayout we apply the update class name.
   const className: ?string = getViewTransitionClassName(
     props.default,
-    props.update,
+    props.update
   );
-  if (className === 'none') {
+  if (className === "none") {
     // If update is "none" then we don't have to apply a name. Since we won't animate this boundary.
     return false;
   }
@@ -792,7 +792,7 @@ export function measureUpdateViewTransition(
     oldName,
     className,
     previousMeasurements,
-    true,
+    true
   );
   const previousCount =
     previousMeasurements === null ? 0 : previousMeasurements.length;
@@ -807,7 +807,7 @@ export function measureUpdateViewTransition(
 
 export function measureNestedViewTransitions(
   changedParent: Fiber,
-  gesture: boolean,
+  gesture: boolean
 ): void {
   let child = changedParent.child;
   while (child !== null) {
@@ -817,7 +817,7 @@ export function measureNestedViewTransitions(
       const name = getViewTransitionName(props, state);
       const className: ?string = getViewTransitionClassName(
         props.default,
-        props.update,
+        props.update
       );
       let previousMeasurements: null | Array<InstanceMeasurement>;
       if (gesture) {
@@ -838,7 +838,7 @@ export function measureNestedViewTransitions(
         name, // Since this is unchanged, new and old name is the same.
         className,
         previousMeasurements,
-        false,
+        false
       );
       if ((child.flags & Update) === NoFlags || !inViewport) {
         // Nothing changed.
