@@ -3637,8 +3637,8 @@ function dispatchSetState<S, A>(
       );
     }
   }
-
   const lane = requestUpdateLane(fiber);
+  //内部派发dispatchSetStateInternal:eagerState
   const didScheduleUpdate = dispatchSetStateInternal(
     fiber,
     queue,

@@ -4,7 +4,6 @@ const Count = () => {
   const [count, setCount] = useState(0);
   const handleIncrement = () => {
     setCount((e) => {
-      // console.log("setCount...", e);
       return e + 1;
     });
   };
@@ -15,8 +14,6 @@ const Count = () => {
       console.log("effect...end", count);
     };
   }, [count]);
-
-  // setCount((e) => e + 1);
 
   return <button onClick={handleIncrement}>{count}</button>;
 };

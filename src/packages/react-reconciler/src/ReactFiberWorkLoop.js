@@ -4621,8 +4621,9 @@ function flushPassiveEffectsImpl() {
 
   const prevExecutionContext = executionContext;
   executionContext |= CommitContext;
-
+  //TODO:先执行unmountEffect操作
   commitPassiveUnmountEffects(root.current);
+  //TODO:再执行MountEffect
   commitPassiveMountEffects(
     root,
     root.current,

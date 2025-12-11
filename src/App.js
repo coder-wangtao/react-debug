@@ -73,47 +73,48 @@ import { useActionState } from "react";
 // };
 
 function App() {
-  const [name, setName] = useState("");
-  const updateData = (name) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(name);
-      }, 1000);
-    });
-  };
-  const [state, handleSubmit, isPending] = useActionState(
-    async (prevState, name) => {
-      try {
-        const res = await updateData(name);
-        return res;
-      } catch (error) {
-        return error.message;
-      }
-    },
-    "初始化"
-  );
+  // const [name, setName] = useState("");
+  // const updateData = (name) => {
+  //   return new Promise((resolve) => {
+  //     setTimeout(() => {
+  //       resolve(name);
+  //     }, 1000);
+  //   });
+  // };
+  // const [state, handleSubmit, isPending] = useActionState(
+  //   async (prevState, name) => {
+  //     try {
+  //       const res = await updateData(name);
+  //       return res;
+  //     } catch (error) {
+  //       return error.message;
+  //     }
+  //   },
+  //   "初始化"
+  // );
   return (
-    <div>
-      <input
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value);
-        }}
-      />
-      <button
-        disabled={isPending}
-        onClick={
-          () => {
-            handleSubmit(name);
-          }
-          // startTransition(() => {
-          // })
-        }
-      >
-        提交
-      </button>
-      <h1>{state}</h1>
-    </div>
+    <Counter />
+    // <div>
+    //   <input
+    //     value={name}
+    //     onChange={(e) => {
+    //       setName(e.target.value);
+    //     }}
+    //   />
+    //   <button
+    //     disabled={isPending}
+    //     onClick={
+    //       () => {
+    //         handleSubmit(name);
+    //       }
+    //       // startTransition(() => {
+    //       // })
+    //     }
+    //   >
+    //     提交
+    //   </button>
+    //   <h1>{state}</h1>
+    // </div>
   );
   // return (
   //   <Suspense fallback={<div>loading...</div>}>

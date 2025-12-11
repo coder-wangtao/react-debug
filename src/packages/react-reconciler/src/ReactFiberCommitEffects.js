@@ -159,7 +159,7 @@ export function commitHookEffectListMount(
             }
           }
 
-          // Mount
+          // //TODO:Mount
           let destroy;
           if (__DEV__) {
             if ((flags & HookInsertion) !== NoHookEffect) {
@@ -259,7 +259,7 @@ export function commitHookEffectListUnmount(
       let effect = firstEffect;
       do {
         if ((effect.tag & flags) === flags) {
-          // Unmount
+          //TODO: Unmount
           const inst = effect.inst;
           const destroy = inst.destroy;
           if (destroy !== undefined) {
